@@ -3,8 +3,8 @@ provider_options:
 
 ansible_connection: psrp
 mssql_host_connection: psrp
-ansible_user: vagrant
-ansible_password: vagrant
+ansible_user: "{{ lab_user }}"
+ansible_password: "{{ lab_password }}"
 ansible_port: 5986
 # Note: Forced NTLM explicitly for PSRP, using negotiate introduced a
 # fixed connection delay before remoting succeeded. To be re-evaluated

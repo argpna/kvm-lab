@@ -3,7 +3,7 @@ linux_sql_server:
   version: "{{ sql_version | default(2022) }}"
   accept_eula: true
   edition: Developer
-  sa_password: VagrantPass1!
+  sa_password: "{{ lab_password }}"
   enable_agent: true
   hadr_enabled: true
   install_tools: true
@@ -13,7 +13,7 @@ linux_sql_server:
   manage_firewall: true
   ad_auth:
     enabled: true
-    account_password: VagrantPass1!
+    account_password: "{{ lab_password }}"
     accounts:
       lnx-cluster-n01: sql-cluster-n01
       lnx-cluster-n02: sql-cluster-n02
@@ -21,13 +21,13 @@ linux_sql_server:
 mssql:
   cluster:
     name: linuxcl01
-    hacluster_password: VagrantPass1!
-    # openssl passwd -6 -salt mssqllabhacluster 'VagrantPass1!'
-    hacluster_password_hash: "$6$mssqllabhacluste$1f4KlVGYWNPBYu7FrgXIrc/mLptOE7yZ8u2ZTj1CUHUODIyz/T1enrY/IhMBao8kZvfwS9EE0D84kFS80jPx.0"  # noqa yaml[line-length]
+    hacluster_password: "{{ lab_password }}"
+    # openssl passwd -6 -salt mssqllabhacluster 'Zq7-Hm2-Xr9-Tw4!'
+    hacluster_password_hash: "$6$mssqllabhacluste$JUpBkO0MyxsndVFgKIUjNoci.iMtwbSlS76SyJ187BVsu3oRrRVMwECIg3PHomvuN3y.xFm1qDx9agC5Ay6iy."  # noqa yaml[line-length]
     sql_login:
       manage: true
       name: pacemaker
-      password: VagrantPass1!
+      password: "{{ lab_password }}"
       secrets_file: /var/opt/mssql/secrets/passwd
   ag:
     name: aglinux01

@@ -10,11 +10,11 @@ windows_sql_server:  # noqa var-naming[no-role-prefix]
     manage: false
     sqlsvc:
       sam_account_name: sqlsvc
-      password: VagrantPass1!
+      password: "{{ lab_password }}"
       description: SQL Server Database Engine service account
     agtsvc:
       sam_account_name: sqlagent
-      password: VagrantPass1!
+      password: "{{ lab_password }}"
       description: SQL Server Agent service account
   sqlsysadminaccounts:
     - "{{ domain.netbios_name }}\\{{ domain.admin.username }}"

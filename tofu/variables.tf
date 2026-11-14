@@ -14,7 +14,12 @@ variable "repo_root" {
 }
 
 variable "ssh_pubkey_file" {
-  description = "Path to the lab SSH public key installed for the vagrant user on Linux guests."
+  description = "Path to the lab SSH public key installed for the lab user on Linux guests."
+  type        = string
+}
+
+variable "lab_user" {
+  description = "Account created on Linux guests for Ansible (lab_user in credentials.yml)."
   type        = string
 }
 

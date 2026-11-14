@@ -12,7 +12,7 @@ windows_sql_server:
   sqlsysadminaccounts:
     - BUILTIN\Administrators
   security_mode: SQL
-  sa_password: "{{ mssql_sa_password | default('VagrantPass1!') }}"
+  sa_password: "{{ mssql_sa_password | default(lab_password) }}"
   browser_startup_type: Disabled
   update_enabled: false
   reboot_if_required: true

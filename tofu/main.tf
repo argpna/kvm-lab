@@ -40,7 +40,7 @@ locals {
     manage_etc_hosts: true
     package_update: false
     users:
-      - name: vagrant
+      - name: ${var.lab_user}
         shell: /bin/bash
         sudo: ALL=(ALL) NOPASSWD:ALL
         ssh_authorized_keys:

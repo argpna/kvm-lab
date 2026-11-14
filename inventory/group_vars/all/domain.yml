@@ -7,11 +7,11 @@ domain:
   netbios_name: LAB
   controller_host: "{{ domain_controller_host }}"
   controller_ip: "{{ domain_controller_ip }}"
-  safe_mode_password: VagrantPass1
+  safe_mode_password: "{{ lab_password }}"
   admin:
-    username: vagrant-admin
-    password: VagrantPass1
-    upn: vagrant-admin@LAB.LOCAL
+    username: "{{ lab_admin_user }}"
+    password: "{{ lab_password }}"
+    upn: "{{ lab_admin_user }}@LAB.LOCAL"
 
 kerberos:
   realm: LAB.LOCAL

@@ -1,6 +1,6 @@
 ansible_connection: ssh
 mssql_host_connection: ssh
-ansible_user: vagrant
+ansible_user: "{{ lab_user }}"
 ansible_port: 22
 ansible_ssh_private_key_file: "{{ inventory_dir }}/../.lab/ssh/id_ed25519"
 

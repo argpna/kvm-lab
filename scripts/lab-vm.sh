@@ -14,6 +14,7 @@ host_file=$root/.lab/hosts/$host.json
 "$root/inventory/inventory.py" --host "$host" >"$host_file"
 
 image=$(jq -r .image "$host_file")
+lab_user=$(python3 -I -c 'import sys, yaml; print(yaml.safe_load(open(sys.argv[1]))["lab_user"])' "$root/inventory/group_vars/all/credentials.yml")
 base=$(virsh -c qemu:///system vol-list --pool "$base_pool" |
   awk -v p="$image-" 'index($1, p) == 1 && $1 ~ /-[0-9]+\.qcow2$/ {print $1}' | sort | tail -n 1)
 if [ -z "$base" ]; then
@@ -23,7 +24,7 @@ fi
 
 args=(-no-color -input=false -state="$root/.lab/state/$host.tfstate"
   -var "host_file=$host_file" -var "base_volume=$base" -var "repo_root=$root"
-  -var "ssh_pubkey_file=$root/.lab/ssh/id_ed25519.pub" -var "base_pool=$base_pool" -var "vm_pool=$vm_pool")
+  -var "ssh_pubkey_file=$root/.lab/ssh/id_ed25519.pub" -var "lab_user=$lab_user" -var "base_pool=$base_pool" -var "vm_pool=$vm_pool")
 
 case $action in
   up) tofu -chdir="$root/tofu" apply -auto-approve "${args[@]}" | sed "s/^/$host: /" ;;

@@ -73,7 +73,7 @@ Then retry the commands:
 ```sh
 time getent hosts domain-con-01.lab.local
 kdestroy
-time kinit vagrant-admin@LAB.LOCAL
+time kinit kvm-admin@LAB.LOCAL
 time kvno host/domain-con-01.lab.local
 ```
 
