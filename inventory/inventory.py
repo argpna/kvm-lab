@@ -427,7 +427,7 @@ def build_resolved_inventory() -> tuple[dict[str, dict[str, Any]], dict[str, dic
 
     Loads raw inventory inputs, merges global and group defaults, validates
     hosts against the active network profile, and produces the hostvars
-    used by Ansible and Vagrant.
+    used by Ansible and OpenTofu.
     """
     inventory = load_inventory()
     named_group_vars = load_named_group_vars()

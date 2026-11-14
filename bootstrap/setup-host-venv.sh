@@ -17,8 +17,16 @@ if ! command -v "$PYTHON_BIN" >/dev/null 2>&1; then
 fi
 
 echo "Recreating host venv at $VENV_PATH with $("$PYTHON_BIN" --version)..."
+tofu_keep=""
+if [ -x "$VENV_PATH/bin/tofu" ]; then
+  tofu_keep="$(mktemp)"
+  cp -p "$VENV_PATH/bin/tofu" "$tofu_keep"
+fi
 rm -rf "$VENV_PATH"
 "$PYTHON_BIN" -m venv "$VENV_PATH"
+if [ -n "$tofu_keep" ]; then
+  mv "$tofu_keep" "$VENV_PATH/bin/tofu"
+fi
 "$VENV_PATH/bin/pip" install --upgrade pip --quiet
 "$VENV_PATH/bin/pip" install -r requirements-host.txt
 mkdir -p "$COLLECTIONS_PATH"

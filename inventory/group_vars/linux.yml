@@ -18,5 +18,5 @@ linux_defaults:
       - enabled: true
         type: virtiofs
         host_path: .
-        guest_path: /vagrant
+        guest_path: /lab
         readonly: false

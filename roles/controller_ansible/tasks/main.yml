@@ -53,8 +53,8 @@
         source "${HOME}/.bashrc"
       fi
       source "{{ controller.python.venv_path }}/bin/activate"
-      if [ -d /vagrant ]; then
-        cd /vagrant
+      if [ -d /lab ]; then
+        cd /lab
       fi
       EOF
       exec /bin/bash --rcfile "${rcfile}" -i

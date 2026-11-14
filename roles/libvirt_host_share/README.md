@@ -16,10 +16,8 @@ backing, because virtiofs depends on it.
 ### Optional variables
 
 * `libvirt_host_share_virsh_bin`: Path to `virsh`. Default: `virsh`.
-* `libvirt_host_share_vagrant_id_file`: Vagrant libvirt ID file used to resolve
-  the effective domain name when `libvirt_host_share_domain_name` is not set.
-* `libvirt_host_share_domain_name`: Explicit libvirt domain name. Default: empty,
-  which uses the Vagrant ID file when present and `inventory_hostname` otherwise.
+* `libvirt_host_share_domain_name`: libvirt domain name of the guest.
+  Default: `lab-<inventory_hostname>`.
 * `libvirt_host_share_attach_live_when_running`: Also attach to the live domain
   when the guest is running. Default: `true`.
 * `libvirt_host_share_require_shared_memory_backing`: Fail unless the domain XML
