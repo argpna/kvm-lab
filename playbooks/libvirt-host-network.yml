@@ -1,0 +1,14 @@
+---
+# Usage examples:
+#   ansible-playbook playbooks/libvirt-host-network.yml
+#   ansible-playbook playbooks/libvirt-host-network.yml -e libvirt_host_network_redefine=true
+#   ansible-playbook playbooks/libvirt-host-network.yml -e libvirt_host_network_state=absent
+#   ansible-playbook playbooks/libvirt-host-network.yml -e libvirt_host_network_state=purged
+
+- name: manage the host-side libvirt lab network
+  hosts: localhost
+  connection: local
+  gather_facts: false
+  become: true
+  roles:
+    - role: libvirt_host_network

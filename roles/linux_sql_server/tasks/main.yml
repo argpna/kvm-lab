@@ -1,0 +1,18 @@
+---
+- name: resolve the requested SQL Server state
+  ansible.builtin.set_fact:
+    linux_sql_server_state: "{{ mssql_engine_state | default(linux_sql_server.state | default('present')) }}"
+
+- name: assert the requested state is supported
+  ansible.builtin.assert:
+    that:
+      - linux_sql_server_state in ['present', 'absent']
+    fail_msg: "linux_sql_server state must be present or absent, got {{ linux_sql_server_state }}"
+
+- name: install and configure SQL Server
+  ansible.builtin.include_tasks: present.yml
+  when: linux_sql_server_state == 'present'
+
+- name: remove SQL Server and its repositories
+  ansible.builtin.include_tasks: remove.yml
+  when: linux_sql_server_state == 'absent'

@@ -1,0 +1,10 @@
+.venv/
+.ansible/
+__pycache__/
+*.log
+.terraform/
+*.tfstate
+*.tfstate.*
+.internal/
+ca_chain.pem
+.lab/

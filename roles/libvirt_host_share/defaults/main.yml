@@ -1,0 +1,6 @@
+---
+libvirt_host_share_virsh_bin: virsh
+libvirt_host_share_domain_name: "lab-{{ inventory_hostname }}"
+libvirt_host_share_attach_live_when_running: true
+libvirt_host_share_require_shared_memory_backing: true
+libvirt_host_share_xml_dir: /tmp/libvirt-host-share

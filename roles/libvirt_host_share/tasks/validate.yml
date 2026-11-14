@@ -1,0 +1,61 @@
+---
+- name: require virsh to be installed on the libvirt host
+  ansible.builtin.command:
+    argv:
+      - "{{ libvirt_host_share_virsh_bin }}"
+      - --version
+  changed_when: false
+
+- name: require libvirt host shares to be present
+  ansible.builtin.assert:
+    that:
+      - libvirt_host_share_list is defined
+      - libvirt_host_share_list is iterable
+      - libvirt_host_share_list | length > 0
+
+- name: validate each host share record
+  ansible.builtin.assert:
+    that:
+      - item.name is defined
+      - item.name | length > 0
+      - item.source is defined
+      - item.source | length > 0
+      - item.source.startswith('/')
+      - item.tag is defined
+      - item.tag | length > 0
+      - item.guest is defined
+      - item.guest is mapping
+      - item.guest.drive is defined
+      - item.guest.drive is match('^[A-Z]:$')
+    fail_msg: "Invalid windows_extras.host_shares entry: {{ item }}"
+  loop: "{{ libvirt_host_share_list }}"
+  loop_control:
+    label: "{{ item.name | default('unknown') }}"
+
+- name: require each host share source directory to exist on the libvirt host
+  ansible.builtin.stat:
+    path: "{{ item.source }}"
+  loop: "{{ libvirt_host_share_list }}"
+  loop_control:
+    label: "{{ item.source }}"
+  register: libvirt_host_share_source_stats
+
+- name: fail if any host share source directory is missing
+  ansible.builtin.assert:
+    that:
+      - item.stat.exists
+      - item.stat.isdir
+    fail_msg: "Host share source path missing or not a directory: {{ item.item.source }}"
+  loop: "{{ libvirt_host_share_source_stats.results }}"
+  loop_control:
+    label: "{{ item.item.source | default('unknown') }}"
+
+- name: resolve libvirt domain name
+  ansible.builtin.set_fact:
+    libvirt_host_share_effective_domain: "{{ libvirt_host_share_domain_name }}"
+
+- name: ensure temporary XML directory exists
+  ansible.builtin.file:
+    path: "{{ libvirt_host_share_xml_dir }}"
+    state: directory
+    mode: "0755"

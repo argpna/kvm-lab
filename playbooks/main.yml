@@ -1,0 +1,92 @@
+---
+# Usage examples:
+#   ansible-playbook playbooks/main.yml
+#   ansible-playbook playbooks/main.yml --limit domain-con-01
+#   ansible-playbook playbooks/main.yml --limit mssql_linux_matrix
+#   ansible-playbook playbooks/main.yml --tags windows_guest_tools --limit win2022-sql2022
+#
+- name: import libvirt lab network playbook
+  ansible.builtin.import_playbook: libvirt-host-network.yml
+  tags:
+    - never
+    - libvirt_host_network
+
+- name: import controller node playbook
+  ansible.builtin.import_playbook: controller-node.yml
+  tags: controller_node
+
+- name: import linux base playbook
+  ansible.builtin.import_playbook: linux-base.yml
+  tags: linux_base
+
+- name: import windows domain controller playbook
+  ansible.builtin.import_playbook: windows-domain-controller.yml
+  tags: domain_controller
+
+- name: import windows domain members playbook
+  ansible.builtin.import_playbook: windows-domain-members.yml
+  tags: domain_members
+
+- name: import windows certificates playbook
+  ansible.builtin.import_playbook: windows-certificates.yml
+  tags: windows_certificate
+
+- name: import windows cluster witness playbook
+  ansible.builtin.import_playbook: windows-failover-cluster.yml
+  tags:
+    - never
+    - windows_failover_cluster
+
+- name: import libvirt host shares playbook
+  ansible.builtin.import_playbook: libvirt-host-share.yml
+  tags:
+    - never
+    - libvirt_host_share
+
+- name: import windows guest tools playbook
+  ansible.builtin.import_playbook: windows-guest-tools.yml
+  tags:
+    - never
+    - windows_guest_tools
+
+- name: import windows sql server playbook
+  ansible.builtin.import_playbook: windows-sql-server.yml
+  tags:
+    - never
+    - windows_sql_server
+
+- name: import linux domain members playbook
+  ansible.builtin.import_playbook: linux-domain-members.yml
+  tags:
+    - never
+    - linux_domain_members
+
+- name: import linux sql server playbook
+  ansible.builtin.import_playbook: linux-sql-server.yml
+  tags:
+    - never
+    - linux_sql_server
+
+- name: import linux pacemaker cluster playbook
+  ansible.builtin.import_playbook: linux-pacemaker-cluster.yml
+  tags:
+    - never
+    - linux_pacemaker_cluster
+
+- name: import windows openssh playbook
+  ansible.builtin.import_playbook: windows-openssh.yml
+  tags:
+    - never
+    - windows_openssh
+
+- name: import mssql test prep playbook
+  ansible.builtin.import_playbook: mssql-test-prep.yml
+  tags:
+    - never
+    - mssql_test_prep
+
+- name: import mssql engine playbook
+  ansible.builtin.import_playbook: mssql-engine.yml
+  tags:
+    - never
+    - mssql_engine

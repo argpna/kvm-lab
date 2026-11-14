@@ -1,0 +1,12 @@
+controller:
+  python:
+    source_version: "3.11.1"
+    venv_path: /home/ansible/controller-venv
+  ansible:
+    package_spec: ansible==12.3.0
+    python_packages:
+      - pypsrp==0.9.0
+      - pywinrm==0.5.0
+      - requests-kerberos==0.15.0
+      - requests-credssp==2.0.0
+      - gssapi==1.11.1

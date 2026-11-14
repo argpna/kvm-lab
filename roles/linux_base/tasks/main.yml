@@ -1,0 +1,50 @@
+---
+- name: install baseline linux packages on Debian-family hosts
+  ansible.builtin.apt:
+    name: "{{ linux_base_packages }}"
+    state: present
+    update_cache: true
+  when: ansible_os_family == 'Debian'
+
+- name: install baseline linux packages on RedHat-family hosts
+  ansible.builtin.dnf:
+    name: "{{ linux_base_packages }}"
+    state: present
+  when:
+    - ansible_os_family == 'RedHat'
+    - ansible_distribution_major_version | int != 8
+
+- name: install baseline linux packages on RHEL 8 hosts
+  ansible.builtin.raw: >-
+    rpm -q {{ linux_base_packages | join(' ') }} >/dev/null 2>&1 &&
+    echo package-state-present ||
+    { dnf install -y {{ linux_base_packages | join(' ') }} && echo package-state-installed; }
+  register: linux_base_redhat8_packages
+  changed_when: "'package-state-installed' in linux_base_redhat8_packages.stdout"
+  when:
+    - ansible_os_family == 'RedHat'
+    - ansible_distribution_major_version | int == 8
+
+- name: create the controller admin group
+  ansible.builtin.group:
+    name: "{{ controller.admin_user.group }}"
+    state: present
+
+- name: create the controller admin user
+  ansible.builtin.user:
+    name: "{{ controller.admin_user.name }}"
+    password: "{{ controller.admin_user.password_hash }}"
+    group: "{{ controller.admin_user.group }}"
+    state: present
+
+- name: install the controller admin authorized key
+  ansible.posix.authorized_key:
+    user: "{{ controller.admin_user.name }}"
+    key: "{{ controller.admin_user.authorized_key }}"
+
+- name: grant passwordless sudo to the controller admin group
+  ansible.builtin.copy:
+    dest: "/etc/sudoers.d/{{ controller.admin_user.group }}"
+    content: "%{{ controller.admin_user.group }} ALL=(ALL) NOPASSWD:ALL\n"
+    mode: "0440"
+    validate: "/usr/sbin/visudo -cf %s"

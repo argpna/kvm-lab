@@ -1,0 +1,45 @@
+# Ansible libvirt_host_share role
+
+## Overview
+
+Attaches host directories to libvirt guests as virtiofs filesystem devices.
+
+By default, the role also requires the target domain to use shared memory
+backing, because virtiofs depends on it.
+
+## Variables
+
+### Mandatory variables
+
+* `libvirt_host_share_list`: Host share records to attach.
+
+### Optional variables
+
+* `libvirt_host_share_virsh_bin`: Path to `virsh`. Default: `virsh`.
+* `libvirt_host_share_vagrant_id_file`: Vagrant libvirt ID file used to resolve
+  the effective domain name when `libvirt_host_share_domain_name` is not set.
+* `libvirt_host_share_domain_name`: Explicit libvirt domain name. Default: empty,
+  which uses the Vagrant ID file when present and `inventory_hostname` otherwise.
+* `libvirt_host_share_attach_live_when_running`: Also attach to the live domain
+  when the guest is running. Default: `true`.
+* `libvirt_host_share_require_shared_memory_backing`: Fail unless the domain XML
+  contains shared memory backing. Default: `true`.
+* `libvirt_host_share_xml_dir`: Temporary directory for the rendered device XML.
+  Default: `/tmp/libvirt-host-share`.
+
+## Example
+
+```yml
+- name: attach host shares to MSSQL Windows guests
+  hosts: mssql_windows
+  gather_facts: false
+  roles:
+    - role: libvirt_host_share
+      vars:
+        libvirt_host_share_list:
+          - name: sqlmedia
+            source: /srv/mssql-media/sql-2022/
+            tag: sqlmedia
+            guest:
+              drive: S:
+```

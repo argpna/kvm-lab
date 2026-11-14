@@ -1,0 +1,22 @@
+---
+# Wait until the selected VMs accept connections and Windows hosts carry their inventory name.
+- name: wait for guests
+  hosts: all
+  gather_facts: false
+  tasks:
+    - name: wait for the first successful connection
+      ansible.builtin.wait_for_connection:
+        timeout: 900
+
+- name: set Windows computer names
+  hosts: windows
+  gather_facts: false
+  tasks:
+    - name: rename the host to its inventory name
+      ansible.windows.win_hostname:
+        name: "{{ inventory_hostname }}"
+      register: lab_ready_hostname
+
+    - name: reboot when the rename requires it
+      ansible.windows.win_reboot:
+      when: lab_ready_hostname.reboot_required

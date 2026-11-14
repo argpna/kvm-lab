@@ -1,0 +1,232 @@
+all:
+  children:
+    databases:
+      children:
+        mssql:
+          children:
+            mssql_linux_ag:
+              hosts:
+                lnx-cluster-n01:
+                  os: linux
+                  ansible_host: 192.168.131.61
+                  mac: 02:56:c0:a8:83:3d
+                  image: ubuntu-22.04
+                  sql_version: 2022
+                  network_interfaces:
+                    - name: sql
+                      network: mssql-main
+                      ip: 192.168.131.61
+                      mac: 02:56:c0:a8:83:3d
+                      role: sql
+
+                lnx-cluster-n02:
+                  os: linux
+                  ansible_host: 192.168.132.62
+                  mac: 02:56:c0:a8:84:3e
+                  image: ubuntu-22.04
+                  sql_version: 2022
+                  network_interfaces:
+                    - name: sql
+                      network: mssql-dr
+                      ip: 192.168.132.62
+                      mac: 02:56:c0:a8:84:3e
+                      role: sql
+
+            mssql_linux_matrix:
+              children:
+                mssql_linux_apt:
+                  hosts:
+                    ubuntu2004-sql2019:
+                      os: linux
+                      ansible_host: 192.168.131.101
+                      mac: 02:56:c0:a8:83:65
+                      image: ubuntu-20.04
+                      ansible_python_interpreter: /usr/bin/python3.9
+                      bootstrap_python:
+                        manager: apt
+                        package: python3.9
+                        post: >-
+                          cd /usr/lib/python3/dist-packages &&
+                          ln -sf apt_pkg.cpython-38-x86_64-linux-gnu.so apt_pkg.cpython-39-x86_64-linux-gnu.so &&
+                          ln -sf apt_inst.cpython-38-x86_64-linux-gnu.so apt_inst.cpython-39-x86_64-linux-gnu.so
+                      sql_version: 2019
+                      provider_options:
+                        cpus: 2
+                      network_interfaces:
+                        - name: sql
+                          network: mssql-main
+                          ip: 192.168.131.101
+                          mac: 02:56:c0:a8:83:65
+                          role: sql
+
+                    ubuntu2004-sql2022:
+                      os: linux
+                      ansible_host: 192.168.131.102
+                      mac: 02:56:c0:a8:83:66
+                      image: ubuntu-20.04
+                      ansible_python_interpreter: /usr/bin/python3.9
+                      bootstrap_python:
+                        manager: apt
+                        package: python3.9
+                        post: >-
+                          cd /usr/lib/python3/dist-packages &&
+                          ln -sf apt_pkg.cpython-38-x86_64-linux-gnu.so apt_pkg.cpython-39-x86_64-linux-gnu.so &&
+                          ln -sf apt_inst.cpython-38-x86_64-linux-gnu.so apt_inst.cpython-39-x86_64-linux-gnu.so
+                      sql_version: 2022
+                      provider_options:
+                        cpus: 2
+                      network_interfaces:
+                        - name: sql
+                          network: mssql-main
+                          ip: 192.168.131.102
+                          mac: 02:56:c0:a8:83:66
+                          role: sql
+
+                    ubuntu2204-sql2022:
+                      os: linux
+                      ansible_host: 192.168.131.103
+                      mac: 02:56:c0:a8:83:67
+                      image: ubuntu-22.04
+                      ansible_python_interpreter: /usr/bin/python3
+                      sql_version: 2022
+                      provider_options:
+                        cpus: 2
+                      network_interfaces:
+                        - name: sql
+                          network: mssql-main
+                          ip: 192.168.131.103
+                          mac: 02:56:c0:a8:83:67
+                          role: sql
+
+                    ubuntu2204-sql2025:
+                      os: linux
+                      ansible_host: 192.168.131.104
+                      mac: 02:56:c0:a8:83:68
+                      image: ubuntu-22.04
+                      ansible_python_interpreter: /usr/bin/python3
+                      sql_version: 2025
+                      provider_options:
+                        cpus: 2
+                      network_interfaces:
+                        - name: sql
+                          network: mssql-main
+                          ip: 192.168.131.104
+                          mac: 02:56:c0:a8:83:68
+                          role: sql
+
+                    ubuntu2404-sql2025:
+                      os: linux
+                      ansible_host: 192.168.131.105
+                      mac: 02:56:c0:a8:83:69
+                      image: ubuntu-24.04
+                      ansible_python_interpreter: /usr/bin/python3
+                      sql_version: 2025
+                      provider_options:
+                        cpus: 2
+                      network_interfaces:
+                        - name: sql
+                          network: mssql-main
+                          ip: 192.168.131.105
+                          mac: 02:56:c0:a8:83:69
+                          role: sql
+
+                mssql_linux_dnf:
+                  hosts:
+                    rocky8-sql2019:
+                      os: linux
+                      ansible_host: 192.168.131.111
+                      mac: 02:56:c0:a8:83:70
+                      image: rocky-8
+                      ansible_python_interpreter: /usr/bin/python3.9
+                      bootstrap_python:
+                        manager: dnf
+                        package: python39
+                      sql_version: 2019
+                      provider_options:
+                        cpus: 2
+                      network_interfaces:
+                        - name: sql
+                          network: mssql-main
+                          ip: 192.168.131.111
+                          mac: 02:56:c0:a8:83:70
+                          role: sql
+
+                    rocky8-sql2022:
+                      os: linux
+                      ansible_host: 192.168.131.112
+                      mac: 02:56:c0:a8:83:71
+                      image: rocky-8
+                      ansible_python_interpreter: /usr/bin/python3.9
+                      bootstrap_python:
+                        manager: dnf
+                        package: python39
+                      sql_version: 2022
+                      provider_options:
+                        cpus: 2
+                      network_interfaces:
+                        - name: sql
+                          network: mssql-main
+                          ip: 192.168.131.112
+                          mac: 02:56:c0:a8:83:71
+                          role: sql
+
+                    rocky9-sql2022:
+                      os: linux
+                      ansible_host: 192.168.131.113
+                      mac: 02:56:c0:a8:83:72
+                      image: rocky-9
+                      ansible_python_interpreter: /usr/bin/python3
+                      sql_version: 2022
+                      provider_options:
+                        cpus: 2
+                      network_interfaces:
+                        - name: sql
+                          network: mssql-main
+                          ip: 192.168.131.113
+                          mac: 02:56:c0:a8:83:72
+                          role: sql
+
+                    rocky9-sql2025:
+                      os: linux
+                      ansible_host: 192.168.131.114
+                      mac: 02:56:c0:a8:83:73
+                      image: rocky-9
+                      ansible_python_interpreter: /usr/bin/python3
+                      sql_version: 2025
+                      provider_options:
+                        cpus: 2
+                      network_interfaces:
+                        - name: sql
+                          network: mssql-main
+                          ip: 192.168.131.114
+                          mac: 02:56:c0:a8:83:73
+                          role: sql
+
+            mssql_linux_unsupported:
+              hosts:
+                opensuse15-sql2022:
+                  os: linux
+                  ansible_host: 192.168.131.120
+                  mac: 02:56:c0:a8:83:90
+                  image: opensuse-leap-15.6
+                  ansible_python_interpreter: /usr/bin/python3.11
+                  bootstrap_python:
+                    manager: zypper
+                    package: python311
+                  sql_version: 2022
+                  provider_options:
+                    cpus: 2
+                  network_interfaces:
+                    - name: sql
+                      network: mssql-main
+                      ip: 192.168.131.120
+                      mac: 02:56:c0:a8:83:90
+                      role: sql
+
+    linux:
+      children:
+        linux_hosts:
+          children:
+            mssql_linux_ag: {}
+            mssql_linux_matrix: {}
+            mssql_linux_unsupported: {}
