@@ -4,12 +4,17 @@
 # The image account is lab_user with lab_password from inventory/group_vars/all/credentials.yml.
 # Set SKIP_UPDATES=true to skip Windows Update. The build takes 1 to 3 hours.
 # After a successful upload the converted image and the build VM disk are deleted.
+# The packer-windoze checkout is pinned in images/packer-windoze.yml (default .lab/packer-windoze).
 # Environment: PACKER_WINDOZE_DIR, PACKER_WINDOZE_VENV, BUILD_DIR (defaults below).
 set -euo pipefail
 
 version=${1:?usage: build-windows-image.sh <version> [ansible-playbook args]}
 shift
-checkout=${PACKER_WINDOZE_DIR:-$HOME/projects/packer-windoze}
+root=$(cd "$(dirname "$0")/.." && pwd)
+pin=$root/images/packer-windoze.yml
+pin_repo=$(python3 -I -c 'import sys, yaml; print(yaml.safe_load(open(sys.argv[1]))["repo"])' "$pin")
+pin_commit=$(python3 -I -c 'import sys, yaml; print(yaml.safe_load(open(sys.argv[1]))["commit"])' "$pin")
+checkout=${PACKER_WINDOZE_DIR:-$root/.lab/packer-windoze}
 venv=${PACKER_WINDOZE_VENV:-$HOME/projects/packer-windoze-venv}
 build=${BUILD_DIR:-$HOME/vm-builds}
 date=$(date +%Y%m%d%H%M)
@@ -25,6 +30,19 @@ if "${virsh_cmd[@]}" vol-info --pool lab-base "$name.qcow2" >/dev/null 2>&1; the
 fi
 
 mkdir -p "$build"
+# The default checkout is managed here: cloned if missing and moved to the pinned commit.
+# A checkout given with PACKER_WINDOZE_DIR must already be at the pinned commit and clean.
+if [ -z "${PACKER_WINDOZE_DIR:-}" ]; then
+    [ -d "$checkout/.git" ] || git clone -q "$pin_repo" "$checkout"
+    if [ "$(git -C "$checkout" rev-parse HEAD)" != "$pin_commit" ]; then
+        git -C "$checkout" fetch -q origin
+        git -C "$checkout" checkout -q --detach "$pin_commit"
+    fi
+fi
+if [ "$(git -C "$checkout" rev-parse HEAD)" != "$pin_commit" ] || [ -n "$(git -C "$checkout" status --porcelain)" ]; then
+    echo "$checkout is not clean at pinned commit $pin_commit (see images/packer-windoze.yml)" >&2
+    exit 1
+fi
 echo "packer-windoze commit: $(git -C "$checkout" rev-parse --short HEAD)"
 cd "$checkout"
 PATH="$venv/bin:$PATH" ansible-playbook main.yml --limit "*$version" --skip-tags box \
