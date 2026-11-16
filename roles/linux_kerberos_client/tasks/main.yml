@@ -34,12 +34,9 @@
   when: ansible_pkg_mgr == 'apt'
 
 - name: install kerberos client packages for zypper platforms
-  ansible.builtin.shell: |
-    rpm -q {{ linux_kerberos_client_zypper_packages | join(' ') }} >/dev/null 2>&1 &&
-    echo package-state-present ||
-    { zypper --non-interactive install -y {{ linux_kerberos_client_zypper_packages | join(' ') }} && echo package-state-installed; }
-  register: linux_kerberos_client_zypper_result
-  changed_when: "'package-state-installed' in linux_kerberos_client_zypper_result.stdout"
+  community.general.zypper:
+    name: "{{ linux_kerberos_client_zypper_packages }}"
+    state: present
   when: ansible_pkg_mgr == 'zypper'
 
 - name: ensure the controller can resolve the KDC hostname locally

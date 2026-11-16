@@ -34,3 +34,6 @@ Build the images with `make images-linux` (downloads the cloud images in `images
 packer-windoze. `images/packer-windoze.yml` pins the fork URL and the exact commit; the script clones
 it to `.lab/packer-windoze` and checks out that commit. packer-windoze has no licence, so its files are
 not copied into this repo.
+
+`lab-base` is not backed up. Linux images are downloaded again with `make images-linux`. A lost Windows
+image is rebuilt with `make image-win2022`, which takes 1 to 3 hours.

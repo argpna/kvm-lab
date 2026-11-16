@@ -156,7 +156,7 @@ resource "libvirt_domain" "vm" {
       [{
         device    = "disk"
         read_only = false
-        driver    = { name = "qemu", type = "qcow2" }
+        driver    = { name = "qemu", type = "qcow2", discard = "unmap" }
         source = { volume = { pool = libvirt_volume.root.pool, volume = libvirt_volume.root.name } }
         target = { dev = "vda", bus = "virtio" }
       }],
