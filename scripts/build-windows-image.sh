@@ -3,6 +3,7 @@
 # Usage: scripts/build-windows-image.sh <version> [extra ansible-playbook args]   (example: 2022)
 # The image account is lab_user with lab_password from inventory/group_vars/all/credentials.yml.
 # Set SKIP_UPDATES=true to skip Windows Update. The build takes 1 to 3 hours.
+# After a successful upload the converted image and the build VM disk are deleted.
 # Environment: PACKER_WINDOZE_DIR, PACKER_WINDOZE_VENV, BUILD_DIR (defaults below).
 set -euo pipefail
 
@@ -32,9 +33,11 @@ PATH="$venv/bin:$PATH" ansible-playbook main.yml --limit "*$version" --skip-tags
 
 disk="$build/$version/qemu/$version-vm.qcow2"
 out="$build/$version/$name.qcow2"
-qemu-img convert -p -O qcow2 "$disk" "$out"
+qemu-img convert -c -p -O qcow2 "$disk" "$out"
 size=$(qemu-img info --output=json "$out" | python3 -I -c 'import json,sys; print(json.load(sys.stdin)["virtual-size"])')
 "${virsh_cmd[@]}" vol-create-as lab-base "$name.qcow2" "$size" --format qcow2
 "${virsh_cmd[@]}" vol-upload --pool lab-base "$name.qcow2" "$out"
 echo "uploaded $name.qcow2 to lab-base"
+# The upload succeeded (set -e), so the converted copy and the build VM disk are no longer needed.
+command rm -f -- "$out" "$disk"
 echo "make it read-only: sudo chmod 0444 /var/lib/libvirt/images/lab-base/$name.qcow2"

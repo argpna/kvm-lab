@@ -7,7 +7,7 @@ Status: work in progress. Image build targets are not implemented yet.
 
 ## Requirements
 
-- Fedora or another Linux host with libvirt (`qemu:///system`), QEMU/KVM, `jq` and passwordless `sudo`
+- Linux host with libvirt, QEMU/KVM, `jq` and passwordless `sudo`
 - Python 3 (for the venv created by `bootstrap/setup-host-venv.sh`)
 - OpenTofu in `.venv/bin/tofu`
 

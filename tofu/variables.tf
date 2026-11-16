@@ -9,7 +9,7 @@ variable "base_volume" {
 }
 
 variable "repo_root" {
-  description = "Absolute path of the repo root (source of the sync_folders host_path '.')."
+  description = "Absolute path of the repo root."
   type        = string
 }
 
@@ -19,7 +19,7 @@ variable "ssh_pubkey_file" {
 }
 
 variable "lab_user" {
-  description = "Account created on Linux guests for Ansible (lab_user in credentials.yml)."
+  description = "Account created on Linux guests for Ansible."
   type        = string
 }
 

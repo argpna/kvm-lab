@@ -15,8 +15,8 @@ host_file=$root/.lab/hosts/$host.json
 
 image=$(jq -r .image "$host_file")
 lab_user=$(python3 -I -c 'import sys, yaml; print(yaml.safe_load(open(sys.argv[1]))["lab_user"])' "$root/inventory/group_vars/all/credentials.yml")
-base=$(virsh -c qemu:///system vol-list --pool "$base_pool" |
-  awk -v p="$image-" 'index($1, p) == 1 && $1 ~ /-[0-9]+\.qcow2$/ {print $1}' | sort | tail -n 1)
+base=${LAB_BASE_VOLUME:-$(virsh -c qemu:///system vol-list --pool "$base_pool" |
+  awk -v p="$image-" 'index($1, p) == 1 && $1 ~ /-[0-9]+\.qcow2$/ {print $1}' | sort | tail -n 1)}
 if [ -z "$base" ]; then
   echo "$host: no base image '$image-<date>.qcow2' in pool $base_pool (build the image first)" >&2
   exit 1

@@ -22,8 +22,8 @@ mssql:
   cluster:
     name: linuxcl01
     hacluster_password: "{{ lab_password }}"
-    # openssl passwd -6 -salt mssqllabhacluster 'Zq7-Hm2-Xr9-Tw4!'
-    hacluster_password_hash: "$6$mssqllabhacluste$JUpBkO0MyxsndVFgKIUjNoci.iMtwbSlS76SyJ187BVsu3oRrRVMwECIg3PHomvuN3y.xFm1qDx9agC5Ay6iy."  # noqa yaml[line-length]
+    # openssl passwd -6 -salt mssqllabhacluster 'Kvmpass@2099'
+    hacluster_password_hash: "$6$mssqllabhacluste$hot/jRoibqOc24idJu5Go0BFYWvVJD5k40w0zUrEdSUsK2LdUN.YbU1fh9imGBNs7MsyB/HEFZUQkMER7e2cs."  # noqa yaml[line-length]
     sql_login:
       manage: true
       name: pacemaker
