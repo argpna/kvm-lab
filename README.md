@@ -17,6 +17,7 @@ Hosts are selected with `GROUP=<group|host1,host2|pattern>` (any Ansible limit p
     make provision GROUP=ubuntu2204-sql2022  run playbooks/main.yml on the host
     make destroy GROUP=ubuntu2204-sql2022    delete the VM
     make status                              list lab VMs
+    make lint                                ansible-lint, shellcheck, tofu fmt and validate
 
 `make up` ensures the libvirt networks used by the selected hosts, creates the VMs in parallel
 (`JOBS`, default 4), waits for SSH or PSRP, and renames Windows hosts to their inventory name.
@@ -34,6 +35,3 @@ Build the images with `make images-linux` (downloads the cloud images in `images
 packer-windoze. `images/packer-windoze.yml` pins the fork URL and the exact commit; the script clones
 it to `.lab/packer-windoze` and checks out that commit. packer-windoze has no licence, so its files are
 not copied into this repo.
-
-`lab-base` is not backed up. Linux images are downloaded again with `make images-linux`. A lost Windows
-image is rebuilt with `make image-win2022`, which takes 1 to 3 hours.

@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Download Linux base images listed in images/manifest.yml into the libvirt pool lab-base.
-# Usage: scripts/fetch-linux-images.sh [image ...]   (default: all). Existing volumes are skipped.
+# Usage: scripts/fetch-linux-images.sh [image ...] (default: all).
 set -euo pipefail
 
 root=$(cd "$(dirname "$0")/.." && pwd)

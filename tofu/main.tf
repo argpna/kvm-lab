@@ -26,7 +26,7 @@ locals {
   ]
   connection_nic = local.h.interfaces.connection
 
-  pubkey = trimspace(file(var.ssh_pubkey_file))
+  pubkey    = trimspace(file(var.ssh_pubkey_file))
   bootstrap = try(local.h.bootstrap_python, null)
   install_cmd = {
     apt    = "apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y"
@@ -45,25 +45,25 @@ locals {
         sudo: ALL=(ALL) NOPASSWD:ALL
         ssh_authorized_keys:
           - ${local.pubkey}
-    %{~ if length(local.sync_folders) > 0 }
+    %{~if length(local.sync_folders) > 0}
     mounts:
-    %{~ for s in local.sync_folders }
+    %{~for s in local.sync_folders}
       - [repo${index(local.sync_folders, s)}, ${s.guest_path}, virtiofs, "defaults,nofail", "0", "0"]
-    %{~ endfor }
-    %{~ endif }
-    %{~ if local.bootstrap != null }
+    %{~endfor}
+    %{~endif}
+    %{~if local.bootstrap != null}
     runcmd:
       - [sh, -c, "test -x ${local.h.ansible_python_interpreter} || { ${local.install_cmd[local.bootstrap.manager]} ${local.bootstrap.package} && ${try(local.bootstrap.post, "true")}; }"]
-    %{~ endif }
+    %{~endif}
   EOT
 
   network_config = yamlencode({
     version = 2
     ethernets = {
       for n in local.nics : n.name => {
-        match = { macaddress = n.mac }
-        "set-name" = n.name
-        dhcp4      = true
+        match             = { macaddress = n.mac }
+        "set-name"        = n.name
+        dhcp4             = true
         "dhcp4-overrides" = { "use-routes" = n.name == local.connection_nic }
       }
     }
@@ -157,8 +157,8 @@ resource "libvirt_domain" "vm" {
         device    = "disk"
         read_only = false
         driver    = { name = "qemu", type = "qcow2", discard = "unmap" }
-        source = { volume = { pool = libvirt_volume.root.pool, volume = libvirt_volume.root.name } }
-        target = { dev = "vda", bus = "virtio" }
+        source    = { volume = { pool = libvirt_volume.root.pool, volume = libvirt_volume.root.name } }
+        target    = { dev = "vda", bus = "virtio" }
       }],
       local.is_windows ? [] : [{
         device    = "disk"

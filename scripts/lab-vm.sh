@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Create or destroy the libvirt VM of one inventory host with OpenTofu (one state file per host).
+# Create or destroy libvirt VMs defined in the inventory with OpenTofu.
 # Usage: scripts/lab-vm.sh up|destroy <host>
 set -euo pipefail
 

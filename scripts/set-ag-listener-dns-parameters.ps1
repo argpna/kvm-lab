@@ -15,7 +15,7 @@ The WSFC cluster name
 The AG listener name used to find the listener Network Name resource.
 
 .PARAMETER NetworkNameResource
-Exact cluster Network Name resource name. Use this when ListenerName matches multiple resources.
+The cluster Network Name resource name. Use when ListenerName matches multiple resources.
 
 .PARAMETER ApplyRegisterAllProvidersIP
 RegisterAllProvidersIP value for Apply mode. Defaults to 1
@@ -55,7 +55,7 @@ Shows what would change without modifying the cluster resource
 .EXAMPLE
 .\scripts\set-ag-listener-dns-parameters.ps1 -Mode Apply -ClusterName wincl01 -ListenerName agl01 -NetworkNameResource "agl01"
 
-Applies the settings to an exact Network Name resource when ListenerName matches multiple resources
+Applies the settings to the Network Name resource when ListenerName matches multiple resources
 #>
 [CmdletBinding(SupportsShouldProcess = $true)]
 param(

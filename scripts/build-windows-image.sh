@@ -1,9 +1,8 @@
 #!/usr/bin/env bash
-# Build a Windows base image with an external packer-windoze checkout and upload it to lab-base.
-# Usage: scripts/build-windows-image.sh <version> [extra ansible-playbook args]   (example: 2022)
+# Build a Windows base image with packer-windoze and upload it to lab-base directory.
+# Usage: scripts/build-windows-image.sh <version> [extra ansible-playbook args] (example: 2022)
 # The image account is lab_user with lab_password from inventory/group_vars/all/credentials.yml.
 # Set SKIP_UPDATES=true to skip Windows Update. The build takes 1 to 3 hours.
-# After a successful upload the converted image and the build VM disk are deleted.
 # The packer-windoze checkout is pinned in images/packer-windoze.yml (default .lab/packer-windoze).
 # Environment: PACKER_WINDOZE_DIR, PACKER_WINDOZE_VENV, BUILD_DIR (defaults below).
 set -euo pipefail
@@ -30,8 +29,6 @@ if "${virsh_cmd[@]}" vol-info --pool lab-base "$name.qcow2" >/dev/null 2>&1; the
 fi
 
 mkdir -p "$build"
-# The default checkout is managed here: cloned if missing and moved to the pinned commit.
-# A checkout given with PACKER_WINDOZE_DIR must already be at the pinned commit and clean.
 if [ -z "${PACKER_WINDOZE_DIR:-}" ]; then
     [ -d "$checkout/.git" ] || git clone -q "$pin_repo" "$checkout"
     if [ "$(git -C "$checkout" rev-parse HEAD)" != "$pin_commit" ]; then
@@ -56,6 +53,5 @@ size=$(qemu-img info --output=json "$out" | python3 -I -c 'import json,sys; prin
 "${virsh_cmd[@]}" vol-create-as lab-base "$name.qcow2" "$size" --format qcow2
 "${virsh_cmd[@]}" vol-upload --pool lab-base "$name.qcow2" "$out"
 echo "uploaded $name.qcow2 to lab-base"
-# The upload succeeded (set -e), so the converted copy and the build VM disk are no longer needed.
 command rm -f -- "$out" "$disk"
-echo "make it read-only: sudo chmod 0444 /var/lib/libvirt/images/lab-base/$name.qcow2"
+echo "make the qcow2 read-only: sudo chmod 0444 /var/lib/libvirt/images/lab-base/$name.qcow2"
