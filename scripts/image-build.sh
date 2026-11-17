@@ -1,13 +1,13 @@
 #!/usr/bin/env bash
 # Build a Windows base image with packer-windoze and upload it to lab-base directory.
-# Usage: scripts/build-windows-image.sh <version> [extra ansible-playbook args] (example: 2022)
+# Usage: scripts/image-build.sh <version> [extra ansible-playbook args] (example: 2022)
 # The image account is lab_user with lab_password from inventory/group_vars/all/credentials.yml.
-# Set SKIP_UPDATES=true to skip Windows Update. The build takes 1 to 3 hours.
+# Set SKIP_UPDATES=true to skip Windows Update. The build takes 1+ hours to complete.
 # The packer-windoze checkout is pinned in images/packer-windoze.yml (default .lab/packer-windoze).
 # Environment: PACKER_WINDOZE_DIR, PACKER_WINDOZE_VENV, BUILD_DIR (defaults below).
 set -euo pipefail
 
-version=${1:?usage: build-windows-image.sh <version> [ansible-playbook args]}
+version=${1:?usage: image-build.sh <version> [ansible-playbook args]}
 shift
 root=$(cd "$(dirname "$0")/.." && pwd)
 pin=$root/images/packer-windoze.yml

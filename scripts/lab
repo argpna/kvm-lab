@@ -1,0 +1,68 @@
+#!/usr/bin/env bash
+# Command line entry point for the lab: VM commands (via make) and base image commands.
+set -euo pipefail
+
+root=$(cd "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")/.." && pwd)
+cd "$root"
+
+usage() {
+  cat <<'USAGE'
+usage: lab <command> [args]
+
+  up [limit]                  create VMs and wait until they accept connections
+  provision [limit] [args]    run playbooks/main.yml (args go to ansible-playbook)
+  stop <limit> [--force]      shut VMs down and keep their disks (up starts them again)
+  destroy <limit>             delete VMs
+  status                      list lab VMs
+  image list                  list base images in lab-base
+  image fetch [name ...]      download Linux images from images/manifest.yml
+  image build <windows-2019|windows-2022> [args]
+                              build a Windows image (1 to 3 hours)
+  image prune [--delete]      list (or delete) old base images no disk uses
+
+limit is any Ansible limit pattern: a group, host1,host2, or a pattern (default: all).
+USAGE
+}
+
+cmd=${1:-}
+[ $# -eq 0 ] || shift
+
+case $cmd in
+  up) exec make up LIMIT="${1:-all}" ;;
+  provision)
+    limit=${1:-all}
+    [ $# -eq 0 ] || shift
+    exec make provision LIMIT="$limit" ANSIBLE_EXTRA_ARGS="$*"
+    ;;
+  stop)
+    limit=${1:?stop needs a limit, for example: lab stop ubuntu2204-sql2022}
+    shift
+    case ${1:-} in
+      "") exec make stop LIMIT="$limit" ;;
+      --force) exec make stop LIMIT="$limit" FORCE=1 ;;
+      *) usage >&2; exit 2 ;;
+    esac
+    ;;
+  destroy) exec make destroy LIMIT="${1:?destroy needs a limit, for example: lab destroy ubuntu2204-sql2022}" ;;
+  status) exec make status ;;
+  image)
+    sub=${1:-}
+    [ $# -eq 0 ] || shift
+    case $sub in
+      list) exec virsh -c qemu:///system vol-list --pool "${LAB_BASE_POOL:-lab-base}" ;;
+      fetch) exec scripts/image-fetch.sh "$@" ;;
+      build)
+        target=${1:?usage: lab image build <windows-2019|windows-2022>}
+        shift
+        case $target in
+          windows-2019 | windows-2022) exec scripts/image-build.sh "${target#windows-}" "$@" ;;
+          *) echo "unknown image to build: $target" >&2; exit 2 ;;
+        esac
+        ;;
+      prune) exec scripts/image-prune.sh "$@" ;;
+      *) usage >&2; exit 2 ;;
+    esac
+    ;;
+  -h | --help | help) usage ;;
+  *) usage >&2; exit 2 ;;
+esac

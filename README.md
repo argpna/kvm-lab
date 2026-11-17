@@ -11,16 +11,22 @@ Linux and Windows lab VMs on KVM/libvirt, configured by Ansible. VMs are created
 
 ## Usage
 
-Hosts are selected with `GROUP=<group|host1,host2|pattern>` (any Ansible limit pattern). Default is all hosts.
+Commands run through `lab` (`scripts/lab`; `lab` is on the PATH once the venv is activated). A limit is any Ansible limit pattern: a group, `host1,host2` or a
+pattern. The default is all hosts, except `destroy`, which requires a host.
 
-    make up GROUP=ubuntu2204-sql2022         create the VM and wait until it accepts connections
-    make provision GROUP=ubuntu2204-sql2022  run playbooks/main.yml on the host
-    make destroy GROUP=ubuntu2204-sql2022    delete the VM
-    make status                              list lab VMs
-    make lint                                ansible-lint, shellcheck, tofu fmt and validate
+    lab up ubuntu2204-sql2022          create the VM
+    lab provision ubuntu2204-sql2022   run playbooks/main.yml on the host
+    lab stop ubuntu2204-sql2022        shut the VM down (--force powers it off)
+    lab destroy ubuntu2204-sql2022     delete the VM
+    lab status                         list lab VMs
+    lab image list                     list base images
+    lab image fetch [name ...]         download Linux images from images/manifest.yml
+    lab image build windows-2022       download and build Windows images
+    lab image prune [--delete]         list (or delete) old base images no disk uses
+    make lint                          ansible-lint, shellcheck, tofu fmt and validate
 
-`make up` ensures the libvirt networks used by the selected hosts, creates the VMs in parallel
-(`JOBS`, default 4), waits for SSH or PSRP, and renames Windows hosts to their inventory name.
+The VM commands call `make up|provision|stop|destroy|status LIMIT=<limit>`. `lab up` starts a stopped VM again.
+
 
 
 ## Base images
@@ -28,10 +34,12 @@ Hosts are selected with `GROUP=<group|host1,host2|pattern>` (any Ansible limit p
 Base images are read-only qcow2 files named `<image>-<date>.qcow2` in the `lab-base` libvirt pool
 (`/var/lib/libvirt/images/lab-base`). The `image` key of a host selects the newest matching file.
 Per-VM disks and cloud-init seed ISOs live in the `lab-vms` pool.
-Never boot a base image directly: only overlays of it are booted.
 
-Build the images with `make images-linux` (downloads the cloud images in `images/manifest.yml`) and
-`make image-win2022` (builds a Windows image, 1 to 3 hours). The Windows build uses a fork of
+Build the images with `lab image fetch` (downloads the cloud images in `images/manifest.yml`) and
+`lab image build windows-2022` (builds a Windows image, 1 to 3 hours). The Windows build uses a fork of
 packer-windoze. `images/packer-windoze.yml` pins the fork URL and the exact commit; the script clones
-it to `.lab/packer-windoze` and checks out that commit. packer-windoze has no licence, so its files are
-not copied into this repo.
+it to `.lab/packer-windoze` and checks out that commit.
+
+## License
+
+Base windows roles are forked from jobrean93/ansible-windows. Keeping the original license as is.

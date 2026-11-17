@@ -27,6 +27,7 @@ rm -rf "$VENV_PATH"
 if [ -n "$tofu_keep" ]; then
   mv "$tofu_keep" "$VENV_PATH/bin/tofu"
 fi
+ln -s "$PROJECT_ROOT/scripts/lab" "$VENV_PATH/bin/lab"
 "$VENV_PATH/bin/pip" install --upgrade pip --quiet
 "$VENV_PATH/bin/pip" install -r requirements-host.txt
 mkdir -p "$COLLECTIONS_PATH"
