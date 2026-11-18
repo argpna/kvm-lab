@@ -12,22 +12,22 @@ vm_pool=${LAB_VM_POOL:-lab-vms}
 
 if [ "$action" = stop ]; then
   domain=lab-$host
-  state=$(virsh -c qemu:///system domstate "$domain") || { echo "$host: no domain $domain" >&2; exit 1; }
+  state=$(virsh -c qemu:///system domstate "$domain") || { echo "The host $host has no domain named $domain." >&2; exit 1; }
   if [ "$state" = "shut off" ]; then
-    echo "$host: already stopped"
+    echo "$host is already stopped."
     exit 0
   fi
   virsh -c qemu:///system shutdown "$domain" >/dev/null
   for ((i = 0; i < ${STOP_TIMEOUT:-120}; i++)); do
-    [ "$(virsh -c qemu:///system domstate "$domain")" = "shut off" ] && { echo "$host: stopped"; exit 0; }
+    [ "$(virsh -c qemu:///system domstate "$domain")" = "shut off" ] && { echo "$host has stopped."; exit 0; }
     sleep 1
   done
   if [ "${FORCE:-}" = 1 ]; then
     virsh -c qemu:///system destroy "$domain" >/dev/null
-    echo "$host: forced off after ${STOP_TIMEOUT:-120} s"
+    echo "$host was forced off after ${STOP_TIMEOUT:-120} seconds."
     exit 0
   fi
-  echo "$host: still running after ${STOP_TIMEOUT:-120} s (use FORCE=1 to power it off)" >&2
+  echo "$host is still running after ${STOP_TIMEOUT:-120} seconds. Set FORCE=1 to power it off." >&2
   exit 1
 fi
 
@@ -40,7 +40,7 @@ lab_user=$(python3 -I -c 'import sys, yaml; print(yaml.safe_load(open(sys.argv[1
 base=${LAB_BASE_VOLUME:-$(virsh -c qemu:///system vol-list --pool "$base_pool" |
   awk -v p="$image-" 'index($1, p) == 1 && $1 ~ /-[0-9]+\.qcow2$/ {print $1}' | sort | tail -n 1)}
 if [ -z "$base" ]; then
-  echo "$host: no base image '$image-<date>.qcow2' in pool $base_pool (build the image first)" >&2
+  echo "The host $host has no base image named '$image-<date>.qcow2' in pool $base_pool. Build the image first." >&2
   exit 1
 fi
 
@@ -61,5 +61,5 @@ args=(-no-color -input=false -state="$root/.lab/state/$host.tfstate"
 case $action in
   up) tofu -chdir="$root/tofu" apply -auto-approve "${args[@]}" | sed "s/^/$host: /" ;;
   destroy) tofu -chdir="$root/tofu" destroy -auto-approve "${args[@]}" | sed "s/^/$host: /" ;;
-  *) echo "unknown action: $action" >&2; exit 2 ;;
+  *) echo "Unknown action: $action" >&2; exit 2 ;;
 esac

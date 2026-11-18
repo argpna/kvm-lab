@@ -1,10 +1,18 @@
 #!/usr/bin/env bash
-# Build Linux base images listed in images/linux.yml: download the cloud image and upload it to the libvirt pool lab-base.
-# Usage: scripts/image-build-linux.sh [image ...] (default: all).
+# Build the Linux base images listed in images/linux.yml. For each image, the script downloads the
+# cloud image, verifies its hash, and uploads it to the libvirt pool lab-base as
+# <image>-<YYYYMMDDHHMM>.qcow2.
+# Usage: scripts/image-build-linux.sh [--force] [image ...] (default: all).
 set -euo pipefail
 
+force=0
+if [ "${1:-}" = --force ]; then
+    force=1
+    shift
+fi
 root=$(cd "$(dirname "$0")/.." && pwd)
-virsh_cmd=(virsh -c qemu:///system)
+# shellcheck source=scripts/image-lib.sh
+. "$root/scripts/image-lib.sh"
 work=$(mktemp -d)
 trap 'rm -rf "$work"' EXIT
 
@@ -16,25 +24,25 @@ for key in want:
     if key not in images:
         sys.exit(f"unknown image: {key}")
     i = images[key]
-    print(key, i["name"], i["url"], i["hash"])
+    print(key, i["url"], i["hash"])
 PY
 )
 
-while read -r key name url hash; do
-    if "${virsh_cmd[@]}" vol-info --pool lab-base "$name.qcow2" >/dev/null 2>&1; then
-        echo "$key: $name.qcow2 already in lab-base"
+while read -r key url hash; do
+    fingerprint=$(printf '%s\n%s\n' "$url" "$hash" | sha256sum | cut -d' ' -f1)
+    if [ "$force" = 0 ] && image_is_current "$key" "$fingerprint"; then
+        echo "$key: already up to date; the newest build is $(image_newest "$key"). Use --force to build a new image."
         continue
     fi
+    name=$(image_new_name "$key")
     algo=${hash%%:*}
     want=${hash#*:}
     file="$work/$name.qcow2"
-    echo "$key: downloading $url"
-    curl -fL --retry 3 -o "$file" "$url"
+    echo "$key: downloading the image from $url"
+    curl -fL --http1.1 --retry 3 --retry-all-errors -sS -o "$file" "$url"
     got=$("${algo}sum" "$file" | cut -d' ' -f1)
-    [ "$got" = "$want" ] || { echo "$key: $algo mismatch (got $got)" >&2; exit 1; }
-    size=$(qemu-img info --output=json "$file" | python3 -I -c 'import json,sys; print(json.load(sys.stdin)["virtual-size"])')
-    "${virsh_cmd[@]}" vol-create-as lab-base "$name.qcow2" "$size" --format qcow2
-    "${virsh_cmd[@]}" vol-upload --pool lab-base "$name.qcow2" "$file"
+    [ "$got" = "$want" ] || { echo "$key: $algo checksum mismatch; expected $want but got $got" >&2; exit 1; }
+    image_upload "$name" "$file" "$fingerprint"
     rm -f "$file"
-    echo "$key: uploaded $name.qcow2"
+    echo "$key: uploaded $name.qcow2 to the libvirt pool."
 done <<<"$list"

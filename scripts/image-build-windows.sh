@@ -1,18 +1,26 @@
 #!/usr/bin/env bash
 # Build a Windows base image from the Microsoft evaluation VHD and upload it to lab-base.
-# Usage: scripts/image-build-windows.sh <image> (an entry from images/windows.yml, for example windows-2022)
+# Usage: scripts/image-build-windows.sh [--force] <image> (an entry from images/windows.yml, for example windows-2022)
+# The build is skipped while the newest volume of the image was built from the same inputs (manifest entry,
+# files in images/windows, credentials). --force builds a new volume anyway; use it after changing this script.
 # The VM account is lab_user with lab_password from inventory/group_vars/all/credentials.yml.
 # Downloads are cached in CACHE_DIR (default ~/.cache/kvm-lab), work files go to BUILD_DIR
 # (default CACHE_DIR/work/<image>). Needs qemu-img, libguestfs-tools (virt-customize, virt-win-reg) and virsh.
 set -euo pipefail
 
-image=${1:?usage: image-build-windows.sh <image> (see images/windows.yml)}
+force=0
+if [ "${1:-}" = --force ]; then
+    force=1
+    shift
+fi
+image=${1:?usage: image-build-windows.sh [--force] <image> (see images/windows.yml)}
 root=$(cd "$(dirname "$0")/.." && pwd)
+# shellcheck source=scripts/image-lib.sh
+. "$root/scripts/image-lib.sh"
 manifest=$root/images/windows.yml
 creds=$root/inventory/group_vars/all/credentials.yml
 cache=${CACHE_DIR:-${XDG_CACHE_HOME:-$HOME/.cache}/kvm-lab}
 build=${BUILD_DIR:-$cache/work/$image}
-virsh_cmd=(virsh -c qemu:///system)
 export LIBGUESTFS_BACKEND=direct
 
 # Print the value at a dotted path of a yaml file.
@@ -33,22 +41,31 @@ fetch() {
     fi
     curl -fL -C - -o "$dest.part" "$url"
     if [ "$(sha256sum "$dest.part" | cut -d' ' -f1)" != "$sha" ]; then
-        echo "sha256 of $url differs from the pin in images/windows.yml; the file is kept as $dest.part" >&2
+        echo "The sha256 of $url does not match the pin in images/windows.yml; the file is kept as $dest.part" >&2
         exit 1
     fi
     mv "$dest.part" "$dest"
 }
 
-yget "$manifest" "images.$image.url" >/dev/null || { echo "unknown image $image (see images/windows.yml)" >&2; exit 2; }
+yget "$manifest" "images.$image.url" >/dev/null || { echo "Unknown image $image (see images/windows.yml)" >&2; exit 2; }
 for tool in qemu-img virt-customize virt-win-reg virsh; do
-    command -v "$tool" >/dev/null || { echo "$tool not found" >&2; exit 1; }
+    command -v "$tool" >/dev/null || { echo "Required tool not found: $tool" >&2; exit 1; }
 done
 
-name=$image-$(date +%Y%m%d%H%M)
-if "${virsh_cmd[@]}" vol-info --pool lab-base "$name.qcow2" >/dev/null 2>&1; then
-    echo "$name.qcow2 already exists in lab-base" >&2
-    exit 1
+fingerprint=$(
+    {
+        python3 -I -c '
+import json, sys, yaml
+d = yaml.safe_load(open(sys.argv[1]))
+print(json.dumps([d["images"][sys.argv[2]], d["virtio_win"], d["extras"]], sort_keys=True))' "$manifest" "$image"
+        cat "$root"/images/windows/{unattend.xml,first-logon.ps1,baseline.reg,tls13.reg} "$creds"
+    } | sha256sum | cut -d' ' -f1
+)
+if [ "$force" = 0 ] && image_is_current "$image" "$fingerprint"; then
+    echo "$image: already up to date; the newest build is $(image_newest "$image"). Use --force to build a new image."
+    exit 0
 fi
+name=$(image_new_name "$image")
 
 mkdir -p "$cache" "$build"
 format=$(yget "$manifest" "images.$image.format")
@@ -90,7 +107,7 @@ PY
 cp "$root/images/windows/first-logon.ps1" "$stage/first-logon.ps1"
 cp "$pwsh_msi" "$stage/pwsh.msi"
 
-echo "converting $disk_src"
+echo "Converting $disk_src to qcow2"
 qemu-img convert -f "$format" -O qcow2 "$disk_src" "$disk"
 
 modules="/Program Files/WindowsPowerShell/Modules/Pester"
@@ -110,8 +127,6 @@ if [ "$(yget "$manifest" "images.$image.tls13")" = True ]; then
 fi
 
 qemu-img convert -c -O qcow2 "$disk" "$out"
-size=$(qemu-img info --output=json "$out" | python3 -I -c 'import json,sys; print(json.load(sys.stdin)["virtual-size"])')
-"${virsh_cmd[@]}" vol-create-as lab-base "$name.qcow2" "$size" --format qcow2
-"${virsh_cmd[@]}" vol-upload --pool lab-base "$name.qcow2" "$out"
-echo "uploaded $name.qcow2 to lab-base"
-echo "make the qcow2 read-only: sudo chmod 0444 /var/lib/libvirt/images/lab-base/$name.qcow2"
+image_upload "$name" "$out" "$fingerprint"
+echo "Uploaded $name.qcow2 to lab-base."
+echo "To make the qcow2 read-only, run: sudo chmod 0444 /var/lib/libvirt/images/lab-base/$name.qcow2"

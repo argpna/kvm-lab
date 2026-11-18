@@ -4,11 +4,12 @@
 # Usage: scripts/image-prune.sh [--delete]
 set -euo pipefail
 
+root=$(cd "$(dirname "$0")/.." && pwd)
 delete=0
 case ${1:-} in
   "") ;;
   --delete) delete=1 ;;
-  *) echo "usage: image-prune.sh [--delete]" >&2; exit 2 ;;
+  *) echo "Usage: image-prune.sh [--delete]" >&2; exit 2 ;;
 esac
 
 virsh_cmd=(virsh -c qemu:///system)
@@ -30,16 +31,17 @@ while read -r name; do
   newest=$(grep -E "^${prefix//./\\.}-[0-9]+\.qcow2$" <<<"$images" | tail -n 1)
   [ "$name" != "$newest" ] || continue
   if grep -qxF "$name" <<<"$backing"; then
-    echo "keep   $name (used by a disk in $vm_pool)"
+    echo "Keeping $name because a disk in $vm_pool uses it."
     continue
   fi
   found=1
   if [ "$delete" = 1 ]; then
     "${virsh_cmd[@]}" vol-delete --pool "$base_pool" "$name"
+    rm -f "$root/.lab/images/$name.fingerprint"
   else
-    echo "would delete $name (newest is $newest)"
+    echo "Would delete $name because the newest volume is $newest."
   fi
 done <<<"$images"
 
-[ "$found" = 1 ] || echo "nothing to prune"
-[ "$delete" = 1 ] || [ "$found" = 0 ] || echo "run 'scripts/lab image prune --delete' to delete"
+[ "$found" = 1 ] || echo "Nothing to prune."
+[ "$delete" = 1 ] || [ "$found" = 0 ] || echo "Run 'scripts/lab image prune --delete' to delete these volumes."

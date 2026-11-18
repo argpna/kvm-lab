@@ -1,4 +1,8 @@
 # Windows base images built from the Microsoft evaluation VHD (scripts/image-build-windows.sh).
+# The build converts the VHD to qcow2 and copies virtio drivers, unattend.xml, first-logon.ps1,
+# the PowerShell 7 MSI, Pester, and the registry settings in images/windows/baseline.reg (and
+# tls13.reg when tls13 is true). The VHD is already generalized, so Windows specializes on the
+# first boot of each VM.
 # format is the qemu-img input format of the download (vpc for .vhd, vhdx for .vhdx).
 # firmware is the VM firmware the disk needs (bios for MBR disks, efi for GPT disks).
 # Keep windows_guest_tools_version in roles/windows_guest_tools/defaults/main.yml at the same release.

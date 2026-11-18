@@ -7,24 +7,30 @@ cd "$root"
 
 usage() {
   cat <<'USAGE'
-usage: lab <command> [args]
+Usage: lab <command> [args]
 
   image build [--force] [name ...]
-                              download Linux images (images/linux.yml) and build Windows
-                              images (images/windows.yml); default all, skips images that
-                              exist, --force rebuilds Windows images (run before up)
-  image list                  list base images in lab-base
-  up [limit]                  create VMs and wait until they accept connections
-  provision [limit] [args]    run playbooks/main.yml
-  stop <limit> [--force]      shut VMs down
-  destroy <limit>             delete VMs and their disks
-  status                      list lab VMs
-  hosts                       list inventory hosts (with their image) and groups
-  image prune [--delete]      list (or delete) old base images no disk uses
+                              Download Linux images (images/linux.yml) and build Windows
+                              images (images/windows.yml). By default all images are built;
+                              images whose inputs are unchanged are skipped, and --force
+                              builds a new image anyway (run this before "up").
+  image list                  List base images in lab-base.
+  up [limit]                  Create VMs and wait until they accept connections.
+  provision [limit] [args]    Run playbooks/main.yml.
+  stop [limit] [--force]      Shut the VMs down (--force powers them off).
+  destroy [limit] [--force]   Delete the VMs and their disks (--force skips the prompt).
+  status                      List lab VMs.
+  hosts                       List inventory hosts (with their image) and groups.
+  image prune [--delete]      List (or delete) old base images that no disk uses.
 
-limit is an inventory host or group (see lab hosts), host1,host2, or any Ansible limit pattern
-(default: all). An image name such as windows-2022 is not a limit; it is the image key of a host.
 USAGE
+}
+
+existing_vms() {
+  local names
+  names=$(virsh -c qemu:///system list --all --name | sed -n 's/^lab-//p' | paste -sd, -)
+  [ -n "$names" ] || { echo "No lab VMs exist." >&2; return 1; }
+  echo "$names"
 }
 
 cmd=${1:-}
@@ -38,25 +44,44 @@ case $cmd in
     exec make provision LIMIT="$limit" ANSIBLE_EXTRA_ARGS="$*"
     ;;
   stop)
-    limit=${1:?stop needs a limit, for example: lab stop ubuntu2204-sql2022}
-    shift
+    limit=""
+    case ${1:-} in "" | --*) ;; *) limit=$1; shift ;; esac
+    [ -n "$limit" ] || limit=$(existing_vms) || exit 0
     case ${1:-} in
       "") exec make stop LIMIT="$limit" ;;
       --force) exec make stop LIMIT="$limit" FORCE=1 ;;
       *) usage >&2; exit 2 ;;
     esac
     ;;
-  destroy) exec make destroy LIMIT="${1:?destroy needs a limit, for example: lab destroy ubuntu2204-sql2022}" ;;
+  destroy)
+    limit=""
+    force=0
+    case ${1:-} in "" | --*) ;; *) limit=$1; shift ;; esac
+    case ${1:-} in
+      "") ;;
+      --force) force=1 ;;
+      *) usage >&2; exit 2 ;;
+    esac
+    if [ -z "$limit" ]; then
+      limit=$(existing_vms) || exit 0
+      if [ "$force" = 0 ]; then
+        echo "This will delete the VMs and their disks: ${limit//,/ }"
+        read -r -p "Continue? [y/N] " answer
+        [ "$answer" = y ] || [ "$answer" = Y ] || { echo "Cancelled."; exit 1; }
+      fi
+    fi
+    exec make destroy LIMIT="$limit"
+    ;;
   status) exec make status ;;
   hosts)
     exec python3 -I - <<'PY'
 import json, subprocess
 d = json.loads(subprocess.check_output(["inventory/inventory.py", "--list"]))
 hosts = d["_meta"]["hostvars"]
-print("hosts (name, image):")
+print("Hosts (name, image):")
 for name, v in sorted(hosts.items()):
     print(f"  {name:28} {v.get('image', '')}")
-print("groups:")
+print("Groups:")
 for g, v in sorted(d.items()):
     if g not in ("_meta", "all") and v.get("hosts"):
         print(f"  {g:28} {len(v['hosts'])} hosts")
@@ -83,18 +108,10 @@ PY
         [ ${#names[@]} -gt 0 ] || mapfile -t names < <(awk '{print $2}' <<<"$known")
         for name in "${names[@]}"; do
           kind=$(awk -v n="$name" '$2 == n {print $1}' <<<"$known")
-          case $kind in
-            linux) scripts/image-build-linux.sh "$name" ;;
-            windows)
-              if [ "$force" = 0 ] && virsh -c qemu:///system vol-list --pool "${LAB_BASE_POOL:-lab-base}" --details 2>/dev/null \
-                | awk '{print $1}' | grep -Eq "^$name-[0-9]{12}\.qcow2$"; then
-                echo "$name: already in lab-base (use --force to rebuild)"
-              else
-                scripts/image-build-windows.sh "$name"
-              fi
-              ;;
-            *) echo "unknown image: $name" >&2; exit 2 ;;
-          esac
+          [ "$kind" = linux ] || [ "$kind" = windows ] || { echo "Unknown image: $name" >&2; exit 2; }
+          args=("$name")
+          [ "$force" = 0 ] || args=(--force "$name")
+          "scripts/image-build-$kind.sh" "${args[@]}"
         done
         ;;
       prune) exec scripts/image-prune.sh "$@" ;;

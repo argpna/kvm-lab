@@ -1,51 +1,72 @@
 # kvm-lab
 
-Linux and Windows lab VMs on KVM/libvirt, configured by Ansible. OpenTofu creates the VMs with the
-`dmacvicar/libvirt` provider, one state file per host, from base images stored in a libvirt pool.
+Linux and Windows lab VMs on KVM and libvirt, configured by Ansible. OpenTofu creates each VM with
+the `dmacvicar/libvirt` provider and keeps one state file per host. Each VM boots from a base image
+stored in a libvirt pool.
 
 ## Requirements
 
-- A Linux host with libvirt, QEMU/KVM, `jq`, and passwordless `sudo`
-- Python 3, for the virtual environment that `bootstrap/setup-host-venv.sh` creates
-- OpenTofu in `.venv/bin/tofu`
+- A Linux host with libvirt, QEMU, KVM (Kernel-based Virtual Machine), `jq`, and passwordless `sudo`
+- Python 3, to create the virtual environment
+- The OpenTofu binary at `.venv/bin/tofu`. `bootstrap/setup-host-venv.sh` does not install it, but it
+  keeps an existing binary when it recreates the environment.
+
+## Get started
+
+1. Create the virtual environment: `bootstrap/setup-host-venv.sh` and activate it
+   `source .venv/bin/activate`
+2. Build the base images: `lab image build [image-name]`
+3. Create the VMs: `lab up [vm-name]`
+4. Configure them: `lab provision [vm-name]`
 
 ## Usage
 
 Run the commands through `lab` (`scripts/lab`), which is on the `PATH` once the virtual environment
-is activated. A limit is any Ansible limit pattern: a group, `host1,host2`, or a pattern. The default
-is all hosts, except for `destroy`, which requires a host. The limit names an inventory host or group
-(`lab hosts` lists them), not an image.
+is activated.
 
-    lab image build [--force] [name ...]  download Linux images (images/linux.yml) and build Windows images (images/windows.yml), default is all images.
-    lab image list                        list base images
-    lab up vm-name                        create the VM (needs its base image and an inventory entry)
-    lab provision vm-name                 run playbooks/main.yml on the host
-    lab stop vm-name                      shut the VM down (--force powers the VM off)
-    lab destroy vm-name                   delete the VM
-    lab status                            list lab VMs
-    lab hosts                             list inventory hosts (with their image) and groups
-    lab image prune [--delete]            list (or delete) old base images that no disk uses
-    make lint                             ansible-lint, shellcheck, tofu fmt, and tofu validate
+| Command | Action |
+| --- | --- |
+| `lab image build [--force] [name ...]` | Download the Linux images in `images/linux.yml` and build the Windows images in `images/windows.yml`. |
+| `lab image list` | List the base images. |
+| `lab image prune [--delete]` | List old base images that no disk uses. With `--delete`, delete them. |
+| `lab up [limit]` | Create the VMs and wait until they accept connections. |
+| `lab provision [limit] [args]` | Run `playbooks/main.yml`. The command passes `args` to `ansible-playbook`. |
+| `lab stop [limit] [--force]` | Shut the VMs down. With `--force`, power them off. |
+| `lab destroy [limit] [--force]` | Delete the VMs. With `--force`, skip the confirmation. |
+| `lab status` | List the lab VMs. |
+| `lab hosts` | List the inventory hosts and groups. |
+
+### Limits
+
+A limit is an Ansible host pattern: a host, a group, `host1,host2`, or a wildcard pattern. Run
+`lab hosts` to list the inventory hosts. When the limit is omitted, `up`, `provision`, `stop` and
+`destroy` apply to all hosts.
 
 ## Base images
 
-Base images are read-only qcow2 files named `<image>-<date>.qcow2` in the `lab-base` libvirt pool
-(`/var/lib/libvirt/images/lab-base`). The `image` key of a host selects the newest matching file.
-Per-VM disks and cloud-init seed ISOs live in the `lab-vms` pool.
+A base image is a read-only qcow2 file named `<image>-<YYYYMMDDHHMM>.qcow2` in the `lab-base`
+libvirt pool (`/var/lib/libvirt/images/lab-base`). The `image` key of a host selects the newest file
+whose name starts with that image name. The VM disks and cloud-init seed ISOs are stored in the
+`lab-vms` pool.
 
-Build all images with `lab image build`, or name the images to build (`lab image build ubuntu-22.04
-windows-2022`). The command downloads the cloud images in `images/linux.yml` and builds the
-Windows images in `images/windows.yml`. The command skips images that already exist in `lab-base`,
-and `--force` rebuilds Windows images under a new date. The Windows build downloads the Microsoft
-evaluation VHD listed in `images/windows.yml`, converts the VHD to qcow2, and copies in the virtio
-drivers, an `unattend.xml` file, a first-logon script, PowerShell 7, Pester, and a few registry
-settings. The registry settings disable automatic updates, and enable TLS 1.3 on Windows Server 2022
-and Windows Server 2025. The build takes a few minutes once the downloads are cached in
-`~/.cache/kvm-lab`. The VHD is already generalized, so Windows specializes on the first boot of each
-VM. Windows Server 2025 images need UEFI. `images/windows.yml` stores the firmware for each image,
-and `scripts/lab-vm.sh` passes it to OpenTofu.
+To build every image in the manifests, run `lab image build`. To build the images selectively,
+for example, run `lab image build ubuntu-22.04 windows-2022`. The Linux images are the vendor cloud images
+listed in `images/linux.yml`. The Windows images are built from the Microsoft evaluation VHDs listed
+in `images/windows.yml`.
+
+After each build, the command saves a checksum of what the image was built from in `.lab/images/`.
+For a Linux image, it is the download URL and hash in `images/linux.yml`. For a Windows image,
+it is the entries in `images/windows.yml` and the files in `images/windows/`. On the next run, the
+command skips an image when the checksum is unchanged since its newest file was built. If there is a
+checksum mismatch, or `--force` is passed, the command builds a new image file.
+
+Run `lab image prune` to list old images that are not in use by any VMs. Pass `--delete` with prune
+to clean up the old image files.
+
+If `.lab/images/` is deleted, the next `lab image build` rebuilds every image again. Downloads are
+cached in `~/.cache/kvm-lab`.
 
 ## License
 
-The base Windows roles are forked from jobrean93/ansible-windows. The project keeps the original
-license as is.
+The base Windows roles are forked from jobrean93/ansible-windows. The project retains the original
+MIT license, with copyright held by Jordan Borean, in the `LICENSE` file.
