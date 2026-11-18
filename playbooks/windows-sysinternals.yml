@@ -1,0 +1,12 @@
+---
+# Usage examples:
+#   ansible-playbook playbooks/windows-sysinternals.yml
+#   ansible-playbook playbooks/windows-sysinternals.yml --limit mssql_windows_matrix
+#   ansible-playbook playbooks/windows-sysinternals.yml --limit win2022-sql2022
+#
+- name: install the Sysinternals suite
+  hosts: windows
+  gather_facts: false
+
+  roles:
+    - role: windows_sysinternals

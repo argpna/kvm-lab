@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Build a Windows base image from the Microsoft evaluation VHD and upload it to lab-base.
-# Usage: scripts/image-build.sh <image> (an entry of images/windows.yml, for example windows-2022)
+# Usage: scripts/image-build.sh <image> (an entry from images/windows.yml, for example windows-2022)
 # The VM account is lab_user with lab_password from inventory/group_vars/all/credentials.yml.
 # Downloads are cached in CACHE_DIR (default ~/vm-builds/common), work files go to BUILD_DIR
 # (default ~/vm-builds/<image>). Needs qemu-img, libguestfs-tools (virt-customize, virt-win-reg) and virsh.
@@ -57,13 +57,11 @@ virtio=$cache/virtio-win-$(yget "$manifest" virtio_win.sha256 | cut -c1-12).iso
 pwsh_msi=$cache/$(basename "$(yget "$manifest" extras.powershell.url)")
 pester_ver=$(yget "$manifest" extras.pester.version)
 pester_pkg=$cache/Pester.$pester_ver.nupkg
-sysint_zip=$cache/SysinternalsSuite-$(yget "$manifest" extras.sysinternals.sha256 | cut -c1-12).zip
 
 fetch "$(yget "$manifest" "images.$image.url")" "$(yget "$manifest" "images.$image.sha256")" "$disk_src"
 fetch "$(yget "$manifest" virtio_win.url)" "$(yget "$manifest" virtio_win.sha256)" "$virtio"
 fetch "$(yget "$manifest" extras.powershell.url)" "$(yget "$manifest" extras.powershell.sha256)" "$pwsh_msi"
 fetch "$(yget "$manifest" extras.pester.url)" "$(yget "$manifest" extras.pester.sha256)" "$pester_pkg"
-fetch "$(yget "$manifest" extras.sysinternals.url)" "$(yget "$manifest" extras.sysinternals.sha256)" "$sysint_zip"
 
 stage=$build/stage
 disk=$build/$name.qcow2
@@ -72,11 +70,11 @@ out=$build/$name.final.qcow2
 trap 'command rm -rf -- "$stage" "$disk" "$out"' EXIT
 rm -rf "$stage"
 mkdir -p "$stage"
-python3 -I - "$root/images/windows/unattend.xml" "$creds" "$stage/unattend.xml" "$pester_pkg" "$pester_ver" "$sysint_zip" "$stage" <<'PY'
+python3 -I - "$root/images/windows/unattend.xml" "$creds" "$stage/unattend.xml" "$pester_pkg" "$pester_ver" "$stage" <<'PY'
 import sys, zipfile
 from xml.sax.saxutils import escape
 import yaml
-unattend, creds, out, pester_pkg, pester_ver, sysint_zip, stage = sys.argv[1:]
+unattend, creds, out, pester_pkg, pester_ver, stage = sys.argv[1:]
 c = yaml.safe_load(open(creds))
 text = open(unattend).read()
 text = text.replace("@LAB_USER@", escape(c["lab_user"])).replace("@LAB_PASSWORD@", escape(c["lab_password"]))
@@ -88,8 +86,6 @@ with zipfile.ZipFile(pester_pkg) as z:
         if m.filename.startswith(skip) or m.filename.endswith(".nuspec"):
             continue
         z.extract(m, f"{stage}/pester/{pester_ver}")
-with zipfile.ZipFile(sysint_zip) as z:
-    z.extractall(f"{stage}/Sysinternals")
 PY
 cp "$root/images/windows/first-logon.ps1" "$stage/first-logon.ps1"
 cp "$pwsh_msi" "$stage/pwsh.msi"
@@ -105,8 +101,6 @@ virt-customize -a "$disk" \
     --copy-in "$stage/pwsh.msi:/Windows/Setup/Scripts" \
     --mkdir /Windows/Panther/Unattend \
     --copy-in "$stage/unattend.xml:/Windows/Panther/Unattend" \
-    --mkdir /Tools \
-    --copy-in "$stage/Sysinternals:/Tools" \
     --mkdir "$modules" \
     --copy-in "$stage/pester/$pester_ver:$modules" \
     --delete "$modules/3.4.0"

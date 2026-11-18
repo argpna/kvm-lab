@@ -1,0 +1,71 @@
+---
+- name: read the sha256 of the installed suite
+  ansible.windows.win_powershell:
+    script: |
+      param([string]$marker)
+      $Ansible.Changed = $false
+      if (Test-Path $marker) { (Get-Content $marker -Raw).Trim() }
+    parameters:
+      marker: "{{ windows_sysinternals_dir }}\\.sha256"
+  register: windows_sysinternals_installed
+
+- name: install the suite when the installed copy does not match the pinned sha256
+  when: (windows_sysinternals_installed.output | first | default('')) != windows_sysinternals_sha256
+  block:
+    - name: ensure the temp directory exists
+      ansible.windows.win_file:
+        path: "{{ windows_sysinternals_temp_dir }}"
+        state: directory
+
+    - name: download the Sysinternals suite and verify its sha256
+      ansible.windows.win_get_url:
+        url: "{{ windows_sysinternals_url }}"
+        dest: "{{ windows_sysinternals_temp_dir }}\\SysinternalsSuite.zip"
+        checksum: "{{ windows_sysinternals_sha256 }}"
+        checksum_algorithm: sha256
+
+    - name: extract the suite and record its sha256
+      ansible.windows.win_powershell:
+        script: |
+          param([string]$dir, [string]$sha256, [string]$zip)
+          $ErrorActionPreference = 'Stop'
+          if (Test-Path $dir) { Remove-Item $dir -Recurse -Force }
+          Expand-Archive -Path $zip -DestinationPath $dir -Force
+          Set-Content -Path (Join-Path $dir '.sha256') -Value $sha256
+        parameters:
+          dir: "{{ windows_sysinternals_dir }}"
+          sha256: "{{ windows_sysinternals_sha256 }}"
+          zip: "{{ windows_sysinternals_temp_dir }}\\SysinternalsSuite.zip"
+
+    - name: remove the downloaded zip
+      ansible.windows.win_file:
+        path: "{{ windows_sysinternals_temp_dir }}\\SysinternalsSuite.zip"
+        state: absent
+
+- name: add the suite to the machine PATH
+  ansible.windows.win_path:
+    elements: "{{ windows_sysinternals_dir }}"
+    scope: machine
+    state: present
+
+- name: accept the Sysinternals EULA for the connection user
+  ansible.windows.win_regedit:
+    path: HKCU:\Software\Sysinternals
+    name: EulaAccepted
+    data: 1
+    type: dword
+
+- name: accept the Sysinternals EULA for new users
+  ansible.windows.win_powershell:
+    script: |
+      $ErrorActionPreference = 'Stop'
+      $hive = 'C:\Users\Default\NTUSER.DAT'
+      reg.exe load HKU\DefaultUser $hive | Out-Null
+      try {
+        $out = reg.exe add 'HKU\DefaultUser\Software\Sysinternals' /v EulaAccepted /t REG_DWORD /d 1 /f
+        if ($LASTEXITCODE -ne 0) { throw "reg add failed: $out" }
+      } finally {
+        [gc]::Collect()
+        reg.exe unload HKU\DefaultUser | Out-Null
+      }
+  changed_when: false

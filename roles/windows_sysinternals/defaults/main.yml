@@ -1,0 +1,6 @@
+---
+# The download URL is unversioned: update windows_sysinternals_sha256 when Microsoft replaces the file.
+windows_sysinternals_url: https://download.sysinternals.com/files/SysinternalsSuite.zip
+windows_sysinternals_sha256: e7f49d1f4477e416b3051636dc44929b20ae025b46a1ee4cd8c1f1e869af6ae6
+windows_sysinternals_dir: C:\Tools\Sysinternals
+windows_sysinternals_temp_dir: C:\Temp

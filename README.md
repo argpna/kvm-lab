@@ -36,7 +36,7 @@ Build the images with `lab image fetch`, which downloads the cloud images in `im
 and with `lab image build windows-2019`, `lab image build windows-2022`, or
 `lab image build windows-2025`. The Windows build downloads the Microsoft evaluation VHD listed in
 `images/windows.yml`, converts the VHD to qcow2, and copies in the virtio drivers, an
-`unattend.xml` file, a first-logon script, PowerShell 7, Pester, the Sysinternals suite, and a few
+`unattend.xml` file, a first-logon script, PowerShell 7, Pester, and a few
 registry settings. The registry settings disable automatic updates, and the registry settings
 enable TLS 1.3 on Windows Server 2022 and Windows Server 2025. Windows Server 2019 does not support
 TLS 1.3. The build takes a few minutes once the downloads are cached in `~/vm-builds/common`. The

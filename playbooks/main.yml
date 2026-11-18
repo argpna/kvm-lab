@@ -49,6 +49,12 @@
     - never
     - windows_guest_tools
 
+- name: import windows sysinternals playbook
+  ansible.builtin.import_playbook: windows-sysinternals.yml
+  tags:
+    - never
+    - windows_sysinternals
+
 - name: import windows sql server playbook
   ansible.builtin.import_playbook: windows-sql-server.yml
   tags:

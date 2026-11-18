@@ -1,14 +1,12 @@
 # Windows base images built from the Microsoft evaluation VHD (scripts/image-build.sh).
 # format is the qemu-img input format of the download (vpc for .vhd, vhdx for .vhdx).
 # firmware is the VM firmware the disk needs (bios for MBR disks, efi for GPT disks).
-# sha256 pins the file the url served when this entry was written.
-# The ISO needs a driver folder for each Windows version below (0.1.229 has no 2k25 folder, 0.1.302 has).
 # Keep windows_guest_tools_version in roles/windows_guest_tools/defaults/main.yml at the same release.
 virtio_win:
   url: https://fedorapeople.org/groups/virt/virtio-win/direct-downloads/archive-virtio/virtio-win-0.1.302-1/virtio-win-0.1.302.iso
   sha256: 303f7ae40dad495d6ae474fdc571df58958a4dbc5c37a522d80f9a203867949d
 
-# Files copied into every image. Sysinternals is unversioned: update sha256 when Microsoft replaces it.
+# Files copied into every image.
 extras:
   powershell:
     url: https://github.com/PowerShell/PowerShell/releases/download/v7.6.10/PowerShell-7.6.10-win-x64.msi
@@ -17,9 +15,6 @@ extras:
     version: 6.2.0
     url: https://www.powershellgallery.com/api/v2/package/Pester/6.2.0
     sha256: e6ac7418d4f12500269aaca58ae56cf1caafbbf1afa2cec334e289d1cf50a239
-  sysinternals:
-    url: https://download.sysinternals.com/files/SysinternalsSuite.zip
-    sha256: e7f49d1f4477e416b3051636dc44929b20ae025b46a1ee4cd8c1f1e869af6ae6
 
 images:
   windows-2019:
