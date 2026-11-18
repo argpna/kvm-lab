@@ -109,7 +109,7 @@ resource "libvirt_volume" "seed" {
 resource "libvirt_volume" "root" {
   name          = "lab-${local.name}.qcow2"
   pool          = var.vm_pool
-  capacity      = local.disk_gb
+  capacity      = max(local.disk_gb, var.base_gib)
   capacity_unit = "GiB"
   target        = { format = { type = "qcow2" } }
   backing_store = {
@@ -126,7 +126,7 @@ resource "libvirt_domain" "vm" {
   vcpu        = local.cpus
   running     = true
 
-  os  = { type = "hvm", type_arch = "x86_64", type_machine = "pc" }
+  os  = merge({ type = "hvm", type_arch = "x86_64", type_machine = "pc" }, var.firmware == "efi" ? { firmware = "efi" } : {})
   cpu = { mode = local.cpu_mode }
 
   clock = {

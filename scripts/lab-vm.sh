@@ -44,8 +44,18 @@ if [ -z "$base" ]; then
   exit 1
 fi
 
+# Firmware comes from the image entry in images/windows.yml (bios when the image is not listed).
+firmware=$(python3 -I -c '
+import sys, yaml
+d = yaml.safe_load(open(sys.argv[1]))
+print(d["images"].get(sys.argv[2], {}).get("firmware", "bios"))' "$root/images/windows.yml" "$image")
+
+# The overlay disk must not be smaller than the base image (GiB, rounded up).
+base_bytes=$(virsh -c qemu:///system vol-info --bytes --pool "$base_pool" "$base" | awk '/^Capacity:/ {print $2}')
+base_gib=$(((base_bytes + 1073741823) / 1073741824))
+
 args=(-no-color -input=false -state="$root/.lab/state/$host.tfstate"
-  -var "host_file=$host_file" -var "base_volume=$base" -var "repo_root=$root"
+  -var "host_file=$host_file" -var "base_volume=$base" -var "firmware=$firmware" -var "base_gib=$base_gib" -var "repo_root=$root"
   -var "ssh_pubkey_file=$root/.lab/ssh/id_ed25519.pub" -var "lab_user=$lab_user" -var "base_pool=$base_pool" -var "vm_pool=$vm_pool")
 
 case $action in

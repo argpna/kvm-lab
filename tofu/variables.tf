@@ -32,3 +32,20 @@ variable "vm_pool" {
   type    = string
   default = "lab-vms"
 }
+
+variable "firmware" {
+  description = "VM firmware, bios or efi."
+  type        = string
+  default     = "bios"
+
+  validation {
+    condition     = contains(["bios", "efi"], var.firmware)
+    error_message = "firmware must be bios or efi."
+  }
+}
+
+variable "base_gib" {
+  description = "Virtual size of the base image in GiB."
+  type        = number
+  default     = 0
+}
