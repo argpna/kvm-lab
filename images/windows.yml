@@ -1,4 +1,4 @@
-# Windows base images built from the Microsoft evaluation VHD (scripts/image-build.sh).
+# Windows base images built from the Microsoft evaluation VHD (scripts/image-build-windows.sh).
 # format is the qemu-img input format of the download (vpc for .vhd, vhdx for .vhdx).
 # firmware is the VM firmware the disk needs (bios for MBR disks, efi for GPT disks).
 # Keep windows_guest_tools_version in roles/windows_guest_tools/defaults/main.yml at the same release.

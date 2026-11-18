@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# Download Linux base images listed in images/manifest.yml into the libvirt pool lab-base.
-# Usage: scripts/image-fetch.sh [image ...] (default: all).
+# Build Linux base images listed in images/manifest.yml: download the cloud image and upload it to the libvirt pool lab-base.
+# Usage: scripts/image-build-linux.sh [image ...] (default: all).
 set -euo pipefail
 
 root=$(cd "$(dirname "$0")/.." && pwd)
