@@ -1,5 +1,0 @@
----
-# repo: fork of jborean93/packer-windoze, branch kvm-lab.
-# commit: commit the build script requires.
-repo: https://github.com/argpna/packer-windoze.git
-commit: 16294ef2b16ea79aceacf3d54992cb733797f8ce
