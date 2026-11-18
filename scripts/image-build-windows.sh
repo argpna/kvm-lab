@@ -2,16 +2,16 @@
 # Build a Windows base image from the Microsoft evaluation VHD and upload it to lab-base.
 # Usage: scripts/image-build-windows.sh <image> (an entry from images/windows.yml, for example windows-2022)
 # The VM account is lab_user with lab_password from inventory/group_vars/all/credentials.yml.
-# Downloads are cached in CACHE_DIR (default ~/vm-builds/common), work files go to BUILD_DIR
-# (default ~/vm-builds/<image>). Needs qemu-img, libguestfs-tools (virt-customize, virt-win-reg) and virsh.
+# Downloads are cached in CACHE_DIR (default ~/.cache/kvm-lab), work files go to BUILD_DIR
+# (default CACHE_DIR/work/<image>). Needs qemu-img, libguestfs-tools (virt-customize, virt-win-reg) and virsh.
 set -euo pipefail
 
 image=${1:?usage: image-build-windows.sh <image> (see images/windows.yml)}
 root=$(cd "$(dirname "$0")/.." && pwd)
 manifest=$root/images/windows.yml
 creds=$root/inventory/group_vars/all/credentials.yml
-cache=${CACHE_DIR:-$HOME/vm-builds/common}
-build=${BUILD_DIR:-$HOME/vm-builds/$image}
+cache=${CACHE_DIR:-${XDG_CACHE_HOME:-$HOME/.cache}/kvm-lab}
+build=${BUILD_DIR:-$cache/work/$image}
 virsh_cmd=(virsh -c qemu:///system)
 export LIBGUESTFS_BACKEND=direct
 

@@ -37,11 +37,11 @@ Windows images in `images/windows.yml`. The command skips images that already ex
 and `--force` rebuilds Windows images under a new date. The Windows build downloads the Microsoft
 evaluation VHD listed in `images/windows.yml`, converts the VHD to qcow2, and copies in the virtio
 drivers, an `unattend.xml` file, a first-logon script, PowerShell 7, Pester, and a few registry
-settings. The registry settings disable automatic updates, and the registry settings enable TLS 1.3
-on Windows Server 2022 and Windows Server 2025. The build takes a few minutes once the downloads
-are cached in `~/vm-builds/common`. The VHD is already generalized, so Windows specializes on the
-first boot of each VM. Windows Server 2025 images need UEFI. `images/windows.yml` records the firmware
-for each image, and `scripts/lab-vm.sh` passes the to OpenTofu.
+settings. The registry settings disable automatic updates, and enable TLS 1.3 on Windows Server 2022
+and Windows Server 2025. The build takes a few minutes once the downloads are cached in
+`~/.cache/kvm-lab`. The VHD is already generalized, so Windows specializes on the first boot of each
+VM. Windows Server 2025 images need UEFI. `images/windows.yml` stores the firmware for each image,
+and `scripts/lab-vm.sh` passes it to OpenTofu.
 
 ## License
 
