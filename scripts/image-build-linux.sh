@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Build Linux base images listed in images/manifest.yml: download the cloud image and upload it to the libvirt pool lab-base.
+# Build Linux base images listed in images/linux.yml: download the cloud image and upload it to the libvirt pool lab-base.
 # Usage: scripts/image-build-linux.sh [image ...] (default: all).
 set -euo pipefail
 
@@ -8,7 +8,7 @@ virsh_cmd=(virsh -c qemu:///system)
 work=$(mktemp -d)
 trap 'rm -rf "$work"' EXIT
 
-list=$(python3 -I - "$root/images/manifest.yml" "$@" <<'PY'
+list=$(python3 -I - "$root/images/linux.yml" "$@" <<'PY'
 import sys, yaml
 images = yaml.safe_load(open(sys.argv[1]))["images"]
 want = sys.argv[2:] or list(images)

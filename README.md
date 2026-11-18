@@ -13,15 +13,17 @@ Linux and Windows lab VMs on KVM/libvirt, configured by Ansible. OpenTofu create
 
 Run the commands through `lab` (`scripts/lab`), which is on the `PATH` once the virtual environment
 is activated. A limit is any Ansible limit pattern: a group, `host1,host2`, or a pattern. The default
-is all hosts, except for `destroy`, which requires a host.
+is all hosts, except for `destroy`, which requires a host. The limit names an inventory host or group
+(`lab hosts` lists them), not an image.
 
-    lab up vm-name                        create the VM (should be defined in the inventory)
+    lab image build [--force] [name ...]  download Linux images (images/linux.yml) and build Windows images (images/windows.yml), default is all images.
+    lab image list                        list base images
+    lab up vm-name                        create the VM (needs its base image and an inventory entry)
     lab provision vm-name                 run playbooks/main.yml on the host
     lab stop vm-name                      shut the VM down (--force powers the VM off)
     lab destroy vm-name                   delete the VM
     lab status                            list lab VMs
-    lab image list                        list base images
-    lab image build [--force] [name ...]  download Linux images and build Windows images (default all)
+    lab hosts                             list inventory hosts (with their image) and groups
     lab image prune [--delete]            list (or delete) old base images that no disk uses
     make lint                             ansible-lint, shellcheck, tofu fmt, and tofu validate
 
@@ -32,7 +34,7 @@ Base images are read-only qcow2 files named `<image>-<date>.qcow2` in the `lab-b
 Per-VM disks and cloud-init seed ISOs live in the `lab-vms` pool.
 
 Build all images with `lab image build`, or name the images to build (`lab image build ubuntu-22.04
-windows-2022`). The command downloads the cloud images in `images/manifest.yml` and builds the
+windows-2022`). The command downloads the cloud images in `images/linux.yml` and builds the
 Windows images in `images/windows.yml`. The command skips images that already exist in `lab-base`,
 and `--force` rebuilds Windows images under a new date. The Windows build downloads the Microsoft
 evaluation VHD listed in `images/windows.yml`, converts the VHD to qcow2, and copies in the virtio

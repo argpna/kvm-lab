@@ -9,19 +9,21 @@ usage() {
   cat <<'USAGE'
 usage: lab <command> [args]
 
+  image build [--force] [name ...]
+                              download Linux images (images/linux.yml) and build Windows
+                              images (images/windows.yml); default all, skips images that
+                              exist, --force rebuilds Windows images (run before up)
+  image list                  list base images in lab-base
   up [limit]                  create VMs and wait until they accept connections
   provision [limit] [args]    run playbooks/main.yml
   stop <limit> [--force]      shut VMs down
   destroy <limit>             delete VMs and their disks
   status                      list lab VMs
-  image list                  list base images in lab-base
-  image build [--force] [name ...]
-                              download Linux images (images/manifest.yml) and build Windows
-                              images (images/windows.yml); default all, skips images that
-                              exist, --force rebuilds Windows images
+  hosts                       list inventory hosts (with their image) and groups
   image prune [--delete]      list (or delete) old base images no disk uses
 
-limit is any Ansible limit pattern: a group, host1,host2, or a pattern (default: all).
+limit is an inventory host or group (see lab hosts), host1,host2, or any Ansible limit pattern
+(default: all). An image name such as windows-2022 is not a limit; it is the image key of a host.
 USAGE
 }
 
@@ -46,6 +48,20 @@ case $cmd in
     ;;
   destroy) exec make destroy LIMIT="${1:?destroy needs a limit, for example: lab destroy ubuntu2204-sql2022}" ;;
   status) exec make status ;;
+  hosts)
+    exec python3 -I - <<'PY'
+import json, subprocess
+d = json.loads(subprocess.check_output(["inventory/inventory.py", "--list"]))
+hosts = d["_meta"]["hostvars"]
+print("hosts (name, image):")
+for name, v in sorted(hosts.items()):
+    print(f"  {name:28} {v.get('image', '')}")
+print("groups:")
+for g, v in sorted(d.items()):
+    if g not in ("_meta", "all") and v.get("hosts"):
+        print(f"  {g:28} {len(v['hosts'])} hosts")
+PY
+    ;;
   image)
     sub=${1:-}
     [ $# -eq 0 ] || shift
@@ -57,7 +73,7 @@ case $cmd in
         for arg in "$@"; do
           if [ "$arg" = --force ]; then force=1; else names+=("$arg"); fi
         done
-        known=$(python3 -I - images/manifest.yml images/windows.yml <<'PY'
+        known=$(python3 -I - images/linux.yml images/windows.yml <<'PY'
 import sys, yaml
 for kind, path in (("linux", sys.argv[1]), ("windows", sys.argv[2])):
     for key in yaml.safe_load(open(path))["images"]:
@@ -72,7 +88,7 @@ PY
             windows)
               if [ "$force" = 0 ] && virsh -c qemu:///system vol-list --pool "${LAB_BASE_POOL:-lab-base}" --details 2>/dev/null \
                 | awk '{print $1}' | grep -Eq "^$name-[0-9]{12}\.qcow2$"; then
-                echo "$name: already in lab-base (--force rebuilds)"
+                echo "$name: already in lab-base (use --force to rebuild)"
               else
                 scripts/image-build-windows.sh "$name"
               fi
