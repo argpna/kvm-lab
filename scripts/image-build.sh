@@ -111,6 +111,9 @@ virt-customize -a "$disk" \
     --copy-in "$stage/pester/$pester_ver:$modules" \
     --delete "$modules/3.4.0"
 virt-win-reg --merge "$disk" "$root/images/windows/baseline.reg"
+if [ "$(yget "$manifest" "images.$image.tls13")" = True ]; then
+    virt-win-reg --merge "$disk" "$root/images/windows/tls13.reg"
+fi
 
 qemu-img convert -c -O qcow2 "$disk" "$out"
 size=$(qemu-img info --output=json "$out" | python3 -I -c 'import json,sys; print(json.load(sys.stdin)["virtual-size"])')

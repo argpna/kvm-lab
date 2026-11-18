@@ -22,13 +22,21 @@ extras:
     sha256: e7f49d1f4477e416b3051636dc44929b20ae025b46a1ee4cd8c1f1e869af6ae6
 
 images:
+  windows-2019:
+    url: https://go.microsoft.com/fwlink/p/?linkid=2195334&clcid=0x409&culture=en-us&country=us
+    sha256: 7b006b80fab7b991dd347dfceea9066c121cbf9d664fd0b8a0167530057ef271
+    format: vpc
+    firmware: bios
+    tls13: false
   windows-2022:
     url: https://go.microsoft.com/fwlink/p/?linkid=2195166&clcid=0x409&culture=en-us&country=us
     sha256: 588355586a3b99f1d47cee02f4861680a7e1bcb353582fbe7da11e2988e7562f
     format: vpc
     firmware: bios
+    tls13: true
   windows-2025:
     url: https://go.microsoft.com/fwlink/?linkid=2345826&clcid=0x409&culture=en-us&country=us
     sha256: 2d175924c8e647969a82e36f931b22397108bd94a030e0e947b7e66e47e0be9a
     format: vhdx
     firmware: efi
+    tls13: true

@@ -36,17 +36,15 @@ Base images are read-only qcow2 files named `<image>-<date>.qcow2` in the `lab-b
 Per-VM disks and cloud-init seed ISOs live in the `lab-vms` pool.
 
 Build the images with `lab image fetch` (downloads the cloud images in `images/manifest.yml`) and
-`lab image build windows-2022` or `windows-2025`. The Windows build downloads the Microsoft evaluation
+`lab image build windows-2019`, `windows-2022` or `windows-2025`. The Windows build downloads the Microsoft evaluation
 VHD listed in `images/windows.yml` (the sha256 of every download is pinned), converts it to qcow2 and
 copies in the virtio drivers, an unattend.xml, a first-logon script, PowerShell 7, Pester, the
-Sysinternals suite and a few registry settings (TLS 1.3, no automatic updates). It takes a few minutes
+Sysinternals suite and a few registry settings (no automatic updates, and TLS 1.3 on 2022 and 2025; Windows Server 2019 does not support it). It takes a few minutes
 once the downloads are cached in `~/vm-builds/common`. The VHD is already generalized, so Windows
 specializes on the first boot of each VM. Windows Server 2025 images need UEFI; `images/windows.yml`
 records the firmware per image and `scripts/lab-vm.sh` passes it to OpenTofu.
 
-`lab image build windows-2019` still uses a fork of packer-windoze (1 to 3 hours).
-`images/packer-windoze.yml` pins the fork URL and the exact commit; the script clones it to
-`.lab/packer-windoze` and checks out that commit.
+`scripts/image-build-packer.sh` and `images/packer-windoze.yml` (the older packer-windoze build) are no longer used by `lab`.
 
 ## License
 
