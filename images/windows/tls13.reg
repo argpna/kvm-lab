@@ -1,5 +1,7 @@
 Windows Registry Editor Version 5.00
 
+; Enables TLS 1.3 on Windows Server 2022 and 2025. Selected by tls13 in images/windows.yml.
+
 [HKEY_LOCAL_MACHINE\SYSTEM\ControlSet001\Control\SecurityProviders\SCHANNEL\Protocols\TLS 1.3]
 
 [HKEY_LOCAL_MACHINE\SYSTEM\ControlSet001\Control\SecurityProviders\SCHANNEL\Protocols\TLS 1.3\Server]

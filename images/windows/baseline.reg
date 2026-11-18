@@ -1,5 +1,9 @@
 Windows Registry Editor Version 5.00
 
+; Applied to every Windows image.
+; ShutdownReason*: no shutdown reason prompt, so that shutdown and reboot do not wait for input.
+; NoAutoUpdate: no automatic Windows updates.
+
 [HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\Windows NT]
 
 [HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\Windows NT\Reliability]

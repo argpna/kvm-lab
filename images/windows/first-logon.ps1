@@ -9,6 +9,9 @@ Get-NetConnectionProfile | Set-NetConnectionProfile -NetworkCategory Private
 Enable-PSRemoting -SkipNetworkProfileCheck -Force
 # Local admins other than the built-in Administrator are denied over WinRM without this.
 Set-ItemProperty 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System' -Name LocalAccountTokenFilterPolicy -Value 1 -Type DWord
+# Windows Server resets this to 0 during specialize, so it cannot live in the image registry. With 0 the
+# ACPI power button is ignored at the logon screen and `lab stop` times out.
+Set-ItemProperty 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System' -Name shutdownwithoutlogon -Value 1 -Type DWord
 Set-Item WSMan:\localhost\Service\Auth\Basic -Value $true
 Enable-WSManCredSSP -Role Server -Force | Out-Null
 
