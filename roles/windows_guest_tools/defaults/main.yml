@@ -2,7 +2,8 @@
 windows_guest_tools_temp_dir: C:\Temp
 windows_guest_tools_task_name: InstallVirtioGuestTools
 
-windows_guest_tools_version: 0.1.266-1
+# Keep in step with virtio_win in images/windows.yml (the base image carries the same driver release).
+windows_guest_tools_version: 0.1.302-1
 windows_guest_tools_base_url: >-
   https://fedorapeople.org/groups/virt/virtio-win/direct-downloads/archive-virtio
 windows_guest_tools_filename: virtio-win-guest-tools.exe

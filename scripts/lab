@@ -16,8 +16,10 @@ usage: lab <command> [args]
   status                      list lab VMs
   image list                  list base images in lab-base
   image fetch [name ...]      download Linux images from images/manifest.yml
-  image build <windows-2019|windows-2022> [args]
-                              build a Windows image (1 to 3 hours)
+  image build <windows-2022|windows-2025>
+                              build a Windows image from the Microsoft evaluation VHD
+  image build windows-2019 [args]
+                              build with packer-windoze (1 to 3 hours)
   image prune [--delete]      list (or delete) old base images no disk uses
 
 limit is any Ansible limit pattern: a group, host1,host2, or a pattern (default: all).
@@ -52,10 +54,11 @@ case $cmd in
       list) exec virsh -c qemu:///system vol-list --pool "${LAB_BASE_POOL:-lab-base}" ;;
       fetch) exec scripts/image-fetch.sh "$@" ;;
       build)
-        target=${1:?usage: lab image build <windows-2019|windows-2022>}
+        target=${1:?usage: lab image build <windows-2019|windows-2022|windows-2025>}
         shift
         case $target in
-          windows-2019 | windows-2022) exec scripts/image-build.sh "${target#windows-}" "$@" ;;
+          windows-2022 | windows-2025) exec scripts/image-build.sh "$target" ;;
+          windows-2019) exec scripts/image-build-packer.sh "${target#windows-}" "$@" ;;
           *) echo "unknown image to build: $target" >&2; exit 2 ;;
         esac
         ;;

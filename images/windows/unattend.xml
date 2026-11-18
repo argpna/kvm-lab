@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<unattend xmlns="urn:schemas-microsoft-com:unattend">
+  <settings pass="oobeSystem">
+    <component name="Microsoft-Windows-International-Core" processorArchitecture="amd64" publicKeyToken="31bf3856ad364e35" language="neutral" versionScope="nonSxS" xmlns:wcm="http://schemas.microsoft.com/WMIConfig/2002/State" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+      <InputLocale>en-US</InputLocale><SystemLocale>en-US</SystemLocale><UILanguage>en-US</UILanguage><UserLocale>en-US</UserLocale>
+    </component>
+    <component name="Microsoft-Windows-Shell-Setup" processorArchitecture="amd64" publicKeyToken="31bf3856ad364e35" language="neutral" versionScope="nonSxS" xmlns:wcm="http://schemas.microsoft.com/WMIConfig/2002/State" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+      <OOBE><HideEULAPage>true</HideEULAPage><ProtectYourPC>1</ProtectYourPC><NetworkLocation>Home</NetworkLocation><HideWirelessSetupInOOBE>true</HideWirelessSetupInOOBE></OOBE>
+      <TimeZone>UTC</TimeZone>
+      <UserAccounts>
+        <AdministratorPassword><Value>@LAB_PASSWORD@</Value><PlainText>true</PlainText></AdministratorPassword>
+        <LocalAccounts><LocalAccount wcm:action="add"><Group>Administrators</Group><DisplayName>@LAB_USER@</DisplayName><Name>@LAB_USER@</Name><Description>@LAB_USER@</Description><Password><Value>@LAB_PASSWORD@</Value><PlainText>true</PlainText></Password></LocalAccount></LocalAccounts>
+      </UserAccounts>
+      <AutoLogon><Enabled>true</Enabled><LogonCount>1</LogonCount><Username>@LAB_USER@</Username><Password><Value>@LAB_PASSWORD@</Value><PlainText>true</PlainText></Password></AutoLogon>
+      <FirstLogonCommands><SynchronousCommand wcm:action="add"><CommandLine>powershell.exe -ExecutionPolicy Bypass -File C:\Windows\Setup\Scripts\first-logon.ps1</CommandLine><Order>1</Order></SynchronousCommand></FirstLogonCommands>
+    </component>
+  </settings>
+</unattend>
