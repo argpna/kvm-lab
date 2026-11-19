@@ -1,0 +1,12 @@
+---
+libvirt_host_setup_user: "{{ ansible_facts['user_id'] }}"
+libvirt_host_setup_require_kvm: true
+libvirt_host_setup_virsh_uri: qemu:///system
+libvirt_host_setup_pools:
+  - name: lab-base
+    path: /var/lib/libvirt/images/lab-base
+  - name: lab-vms
+    path: /var/lib/libvirt/images/lab-vms
+libvirt_host_setup_tofu_version: "1.13.9"
+libvirt_host_setup_tofu_dir: /usr/local/bin
+libvirt_host_setup_tofu_release: "https://github.com/opentofu/opentofu/releases/download/v{{ libvirt_host_setup_tofu_version }}"

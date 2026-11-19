@@ -1,0 +1,44 @@
+---
+- name: read the installed OpenTofu version
+  ansible.builtin.command:
+    argv: ["{{ libvirt_host_setup_tofu_dir }}/tofu", version, -json]
+  register: libvirt_host_setup_tofu_installed
+  failed_when: false
+  changed_when: false
+  check_mode: false
+
+- name: install OpenTofu
+  when: >-
+    libvirt_host_setup_tofu_installed.rc != 0
+    or (libvirt_host_setup_tofu_installed.stdout | from_json).terraform_version != libvirt_host_setup_tofu_version
+  block:
+    - name: create a download directory
+      ansible.builtin.tempfile:
+        state: directory
+        prefix: tofu-
+      register: libvirt_host_setup_tofu_tmp
+      check_mode: false
+
+    - name: download the OpenTofu zip and verify its SHA256 checksum
+      ansible.builtin.get_url:
+        url: "{{ libvirt_host_setup_tofu_release }}/tofu_{{ libvirt_host_setup_tofu_version }}_linux_amd64.zip"
+        dest: "{{ libvirt_host_setup_tofu_tmp.path }}/tofu.zip"
+        checksum: "sha256:{{ libvirt_host_setup_tofu_release }}/tofu_{{ libvirt_host_setup_tofu_version }}_SHA256SUMS"
+        mode: "0600"
+
+    - name: extract the tofu binary
+      ansible.builtin.unarchive:
+        src: "{{ libvirt_host_setup_tofu_tmp.path }}/tofu.zip"
+        dest: "{{ libvirt_host_setup_tofu_dir }}"
+        remote_src: true
+        include: [tofu]
+        mode: "0755"
+        owner: root
+        group: root
+      when: not ansible_check_mode
+  always:
+    - name: remove the download directory
+      ansible.builtin.file:
+        path: "{{ libvirt_host_setup_tofu_tmp.path }}"
+        state: absent
+      when: libvirt_host_setup_tofu_tmp.path is defined

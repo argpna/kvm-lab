@@ -1,0 +1,10 @@
+---
+# Install and configure the lab prerequisites on a host machine (packages, libvirt, pools, OpenTofu).
+# Usage: lab host-setup [--check] [ansible-playbook args, e.g. --ask-become-pass]
+- name: set up this machine as a lab host
+  hosts: localhost
+  connection: local
+  gather_facts: true
+  gather_subset: [min]
+  roles:
+    - role: libvirt_host_setup

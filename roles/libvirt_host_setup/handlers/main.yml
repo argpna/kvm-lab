@@ -1,0 +1,6 @@
+---
+- name: remind the user to log in again
+  ansible.builtin.debug:
+    msg: >-
+      {{ libvirt_host_setup_user }} was added to the group libvirt. Log out and in again (or run
+      "newgrp libvirt") before using virsh and the lab commands.

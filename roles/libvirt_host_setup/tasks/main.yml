@@ -1,0 +1,82 @@
+---
+- name: require a supported host
+  ansible.builtin.assert:
+    that:
+      - ansible_facts['os_family'] in ['Debian', 'RedHat']
+      - ansible_facts['architecture'] == 'x86_64'
+    fail_msg: >-
+      The host must be an x86_64 Debian family (apt) or Red Hat family (dnf) system, but this host
+      is {{ ansible_facts['distribution'] }} on {{ ansible_facts['architecture'] }}.
+  tags: always
+
+- name: load the package lists of the host family
+  ansible.builtin.include_vars: "{{ ansible_facts['os_family'] }}.yml"
+  tags: always
+
+- name: check for /dev/kvm
+  ansible.builtin.stat:
+    path: /dev/kvm
+  register: libvirt_host_setup_kvm
+  tags: always
+
+- name: require /dev/kvm
+  ansible.builtin.assert:
+    that: libvirt_host_setup_kvm.stat.exists
+    fail_msg: >-
+      /dev/kvm does not exist. Enable hardware virtualization (Intel VT-x or AMD-V) in the firmware
+      setup, or enable nested virtualization when the host is a VM.
+  when: libvirt_host_setup_require_kvm | bool
+  tags: always
+
+- name: install and configure libvirt
+  become: true
+  block:
+    - name: refresh the apt package index
+      ansible.builtin.apt:
+        update_cache: true
+        cache_valid_time: 3600
+      when: ansible_facts['os_family'] == 'Debian'
+      tags: packages
+
+    - name: install the host packages
+      ansible.builtin.package:
+        name: "{{ libvirt_host_setup_packages }}"
+        state: present
+      tags: packages
+
+    - name: enable and start the libvirt sockets
+      ansible.builtin.systemd:
+        name: "{{ item }}"
+        enabled: true
+        state: started
+      loop: "{{ libvirt_host_setup_sockets }}"
+      tags: services
+
+    - name: enable and start the libvirt services
+      ansible.builtin.systemd:
+        name: "{{ item }}"
+        enabled: true
+        state: started
+      loop: "{{ libvirt_host_setup_services }}"
+      tags: services
+
+    - name: add the user to the libvirt group
+      ansible.builtin.user:
+        name: "{{ libvirt_host_setup_user }}"
+        groups: libvirt
+        append: true
+      notify: remind the user to log in again
+      tags: access
+
+    - name: create the storage pools
+      ansible.builtin.include_tasks: pool.yml
+      loop: "{{ libvirt_host_setup_pools }}"
+      loop_control:
+        loop_var: libvirt_host_setup_pool
+        label: "{{ libvirt_host_setup_pool.name }}"
+      tags: pools
+
+- name: install OpenTofu
+  ansible.builtin.import_tasks: tofu.yml
+  become: true
+  tags: tofu

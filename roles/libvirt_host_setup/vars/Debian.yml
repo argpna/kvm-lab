@@ -1,0 +1,27 @@
+---
+libvirt_host_setup_virtiofsd_packaged: >-
+  {{
+    (ansible_facts['distribution'] == 'Debian' and ansible_facts['distribution_major_version'] | int >= 13)
+    or (ansible_facts['distribution'] == 'Ubuntu' and ansible_facts['distribution_major_version'] | int >= 24)
+  }}
+libvirt_host_setup_packages: >-
+  {{
+    [
+      'qemu-system-x86',
+      'qemu-utils',
+      'libvirt-daemon-system',
+      'libvirt-clients',
+      'dnsmasq-base',
+      'nftables',
+      'ovmf',
+      'libguestfs-tools',
+      'ntfs-3g',
+      'jq',
+      'curl',
+      'openssh-client',
+      'unzip',
+    ] + (['virtiofsd'] if libvirt_host_setup_virtiofsd_packaged | bool else [])
+  }}
+libvirt_host_setup_sockets: []
+libvirt_host_setup_services:
+  - libvirtd.service

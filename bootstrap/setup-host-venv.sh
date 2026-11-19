@@ -17,20 +17,12 @@ if ! command -v "$PYTHON_BIN" >/dev/null 2>&1; then
 fi
 
 echo "Recreating host venv at $VENV_PATH with $("$PYTHON_BIN" --version)..."
-tofu_keep=""
-if [ -x "$VENV_PATH/bin/tofu" ]; then
-  tofu_keep="$(mktemp)"
-  cp -p "$VENV_PATH/bin/tofu" "$tofu_keep"
-fi
 rm -rf "$VENV_PATH"
 "$PYTHON_BIN" -m venv "$VENV_PATH"
-if [ -n "$tofu_keep" ]; then
-  mv "$tofu_keep" "$VENV_PATH/bin/tofu"
-fi
 ln -s "$PROJECT_ROOT/scripts/lab" "$VENV_PATH/bin/lab"
 "$VENV_PATH/bin/pip" install --upgrade pip --quiet
 "$VENV_PATH/bin/pip" install -r requirements-host.txt
 mkdir -p "$COLLECTIONS_PATH"
 "$VENV_PATH/bin/ansible-galaxy" collection install -r requirements-host.yml -p "$COLLECTIONS_PATH"
 
-echo "Done. Run 'source $VENV_PATH/bin/activate'"
+echo "Done. Run 'source $VENV_PATH/bin/activate', then 'lab host-setup' to install the host prerequisites."

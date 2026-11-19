@@ -1,0 +1,30 @@
+---
+- name: read the pool state
+  ansible.builtin.command:
+    argv: [virsh, -c, "{{ libvirt_host_setup_virsh_uri }}", pool-info, "{{ libvirt_host_setup_pool.name }}"]
+  register: libvirt_host_setup_pool_info
+  failed_when: false
+  changed_when: false
+  check_mode: false
+
+- name: define and build the pool
+  ansible.builtin.command:
+    argv: "{{ item }}"
+  loop:
+    - [virsh, -c, "{{ libvirt_host_setup_virsh_uri }}", pool-define-as, "{{ libvirt_host_setup_pool.name }}", dir,
+       --target, "{{ libvirt_host_setup_pool.path }}"]
+    - [virsh, -c, "{{ libvirt_host_setup_virsh_uri }}", pool-build, "{{ libvirt_host_setup_pool.name }}"]
+  changed_when: true
+  when: libvirt_host_setup_pool_info.rc != 0
+
+- name: start the pool
+  ansible.builtin.command:
+    argv: [virsh, -c, "{{ libvirt_host_setup_virsh_uri }}", pool-start, "{{ libvirt_host_setup_pool.name }}"]
+  changed_when: true
+  when: libvirt_host_setup_pool_info.rc != 0 or libvirt_host_setup_pool_info.stdout is not search('State:\s+running')
+
+- name: enable pool autostart
+  ansible.builtin.command:
+    argv: [virsh, -c, "{{ libvirt_host_setup_virsh_uri }}", pool-autostart, "{{ libvirt_host_setup_pool.name }}"]
+  changed_when: true
+  when: libvirt_host_setup_pool_info.rc != 0 or libvirt_host_setup_pool_info.stdout is not search('Autostart:\s+yes')
