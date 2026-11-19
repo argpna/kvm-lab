@@ -116,6 +116,10 @@ resource "libvirt_volume" "root" {
     path   = "/var/lib/libvirt/images/${var.base_pool}/${var.base_volume}"
     format = { type = "qcow2" }
   }
+
+  lifecycle {
+    ignore_changes = [backing_store]
+  }
 }
 
 resource "libvirt_domain" "vm" {
