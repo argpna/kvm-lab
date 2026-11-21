@@ -1,9 +1,11 @@
 #!/usr/bin/env bash
-# Command line entry point for the lab: VM commands (via make) and base image commands.
+# Command line entry point for the lab: VM commands and base image commands.
 set -euo pipefail
 
 root=$(cd "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")/.." && pwd)
 cd "$root"
+export PATH=$root/.venv/bin:$PATH
+jobs=${JOBS:-4}
 
 usage() {
   cat <<'USAGE'
@@ -36,26 +38,56 @@ existing_vms() {
   echo "$names"
 }
 
+resolve_hosts() {
+  local hosts
+  hosts=$(ansible all -i inventory/inventory.py -l "$1" --list-hosts 2>/dev/null | tail -n +2 | tr -d ' ')
+  [ -n "$hosts" ] || { echo "No hosts match \"$1\". Run \"lab hosts\" to list hosts and groups." >&2; return 1; }
+  echo "$hosts"
+}
+
+ensure_key() {
+  [ -f .lab/ssh/id_ed25519 ] || { mkdir -p .lab/ssh && ssh-keygen -q -t ed25519 -N '' -C kvm-lab -f .lab/ssh/id_ed25519; }
+}
+
+ensure_networks() {
+  local nets h
+  nets=$(for h in $1; do inventory/inventory.py --host "$h" | jq -r '.attached_networks[]'; done | sort -u | jq -R . | jq -sc .)
+  ansible-playbook playbooks/libvirt-host-network.yml -e "{\"libvirt_host_network_names\": $nets}"
+}
+
+vm_each() {
+  printf '%s\n' "$2" | xargs -P "$jobs" -I{} scripts/lab-vm.sh "$1" {}
+}
+
 cmd=${1:-}
 [ $# -eq 0 ] || shift
 
 case $cmd in
   host-setup) exec ansible-playbook playbooks/host-setup.yml "$@" ;;
-  up) exec make up LIMIT="${1:-all}" ;;
+  up)
+    limit=${1:-all}
+    hosts=$(resolve_hosts "$limit") || exit 1
+    ensure_key
+    ensure_networks "$hosts"
+    vm_each up "$hosts"
+    exec ansible-playbook playbooks/lab-ready.yml -l "$limit"
+    ;;
   provision)
     limit=${1:-all}
     [ $# -eq 0 ] || shift
-    exec make provision LIMIT="$limit" ANSIBLE_EXTRA_ARGS="$*"
+    exec ansible-playbook playbooks/main.yml -l "$limit" "$@"
     ;;
   stop)
     limit=""
     case ${1:-} in "" | --*) ;; *) limit=$1; shift ;; esac
     [ -n "$limit" ] || limit=$(existing_vms) || exit 0
     case ${1:-} in
-      "") exec make stop LIMIT="$limit" ;;
-      --force) exec make stop LIMIT="$limit" FORCE=1 ;;
+      "") ;;
+      --force) export FORCE=1 ;;
       *) usage >&2; exit 2 ;;
     esac
+    hosts=$(resolve_hosts "$limit") || exit 1
+    vm_each stop "$hosts"
     ;;
   destroy)
     limit=""
@@ -74,9 +106,10 @@ case $cmd in
         [ "$answer" = y ] || [ "$answer" = Y ] || { echo "Cancelled."; exit 1; }
       fi
     fi
-    exec make destroy LIMIT="$limit"
+    hosts=$(resolve_hosts "$limit") || exit 1
+    vm_each destroy "$hosts"
     ;;
-  status) exec make status ;;
+  status) virsh -c qemu:///system list --all | grep -E ' Name |lab-' || true ;;
   hosts)
     exec python3 -I - <<'PY'
 import json, subprocess
