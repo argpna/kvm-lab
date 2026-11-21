@@ -2,10 +2,9 @@
 # Usage examples:
 #   ansible-playbook playbooks/mssql-test-prep.yml
 #   ansible-playbook playbooks/mssql-test-prep.yml --limit win2022-sql2022
-#   ansible-playbook playbooks/mssql-test-prep.yml --limit opensuse15-sql2022
 #
 - name: prepare MSSQL Linux hosts for the integration suites
-  hosts: mssql_linux_matrix:mssql_linux_unsupported
+  hosts: mssql_linux_matrix
   gather_facts: false
   become: true
 
@@ -22,7 +21,7 @@
     - name: install the python interpreter the inventory expects
       ansible.builtin.raw: >-
         test -x {{ ansible_python_interpreter }} ||
-        { {{ {'dnf': 'dnf install -y', 'zypper': 'zypper --non-interactive install -y'}[bootstrap_python.manager] }}
+        { {{ {'dnf': 'dnf install -y'}[bootstrap_python.manager] }}
         {{ bootstrap_python.package }} && echo python-installed; }
       register: mssql_test_prep_python
       changed_when: "'python-installed' in mssql_test_prep_python.stdout"

@@ -6,7 +6,7 @@
 #   ansible-playbook playbooks/mssql-collect-logs.yml --limit ubuntu2204-sql2022 -e mssql_logs_dest=/tmp/guest-logs
 #
 - name: collect SQL Server logs from MSSQL Linux hosts
-  hosts: mssql_install_targets:mssql_manage_targets:mssql_linux_unsupported:&linux
+  hosts: mssql_install_targets:mssql_manage_targets:&linux
   become: true
   gather_facts: false
 

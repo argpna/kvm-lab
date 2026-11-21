@@ -202,31 +202,9 @@ all:
                           mac: 02:56:c0:a8:83:73
                           role: sql
 
-            mssql_linux_unsupported:
-              hosts:
-                opensuse15-sql2022:
-                  os: linux
-                  ansible_host: 192.168.131.120
-                  mac: 02:56:c0:a8:83:90
-                  image: opensuse-leap-15.6
-                  ansible_python_interpreter: /usr/bin/python3.11
-                  bootstrap_python:
-                    manager: zypper
-                    package: python311
-                  sql_version: 2022
-                  provider_options:
-                    cpus: 2
-                  network_interfaces:
-                    - name: sql
-                      network: mssql-main
-                      ip: 192.168.131.120
-                      mac: 02:56:c0:a8:83:90
-                      role: sql
-
     linux:
       children:
         linux_hosts:
           children:
             mssql_linux_ag: {}
             mssql_linux_matrix: {}
-            mssql_linux_unsupported: {}

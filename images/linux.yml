@@ -19,6 +19,3 @@ images:
   rocky-9:
     url: https://dl.rockylinux.org/pub/rocky/9/images/x86_64/Rocky-9-GenericCloud-Base-9.9-20261112.0.x86_64.qcow2
     hash: sha256:4f88f4209de50813d8054ab97309e7169a580206a0c4ea04f375d36c4846d50e
-  opensuse-leap-15.6:
-    url: https://download.opensuse.org/distribution/leap/15.6/appliances/openSUSE-Leap-15.6-Minimal-VM.x86_64-15.6.0-Cloud-Build19.146.qcow2
-    hash: sha256:0a5720416d423f98aacaa793a57d56ec045e3dd25cd88713952660ad00da53bd
