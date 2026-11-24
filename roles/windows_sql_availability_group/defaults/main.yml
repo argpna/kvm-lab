@@ -1,0 +1,4 @@
+---
+windows_sql_availability_group:  # noqa var-naming[no-role-prefix]
+  endpoint_port: 5022
+  service_account: "{{ domain.netbios_name }}\\{{ windows_sql_server.service_accounts.sqlsvc.sam_account_name }}"

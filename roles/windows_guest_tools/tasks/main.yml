@@ -4,6 +4,10 @@
     path: "{{ windows_guest_tools_winfsp_url }}"
     provider: msi
     state: present
+  register: windows_guest_tools_winfsp
+  until: windows_guest_tools_winfsp is succeeded
+  retries: 10
+  delay: 15
   when: windows_extras.guest_tools.winfsp_enabled | bool
 
 - name: Check whether the VirtioFS service already exists
@@ -28,6 +32,10 @@
         url: "{{ windows_guest_tools_url }}"
         dest: "{{ windows_guest_tools_local_path }}"
         force: false
+      register: windows_guest_tools_download
+      until: windows_guest_tools_download is succeeded
+      retries: 10
+      delay: 15
 
     - name: Create scheduled task for silent virtio install
       community.windows.win_scheduled_task:

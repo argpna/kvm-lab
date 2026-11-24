@@ -90,7 +90,8 @@ if ($security_mode -eq 'SQL') {
 }
 
 if ($sqlsysadminaccounts -and $sqlsysadminaccounts.Count -gt 0) {
-    $setup_args.Add("/SQLSYSADMINACCOUNTS=`"$(@($sqlsysadminaccounts) -join ' ')`"")
+    $quoted = @($sqlsysadminaccounts) | ForEach-Object { "`"$_`"" }
+    $setup_args.Add("/SQLSYSADMINACCOUNTS=$($quoted -join ' ')")
 }
 
 if ($security_mode -eq 'SQL' -and $sa_password) {

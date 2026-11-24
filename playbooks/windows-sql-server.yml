@@ -93,3 +93,12 @@
           when:
             - windows_sql_server.dismount_media_after_install | default(true)
             - windows_sql_server_staged_iso_path is defined
+
+- name: enable Always On availability groups on MSSQL Windows cluster hosts
+  hosts: mssql_windows_ag
+  gather_facts: false
+
+  tasks:
+    - name: prepare the instance and the failover cluster for availability groups
+      ansible.builtin.include_role:
+        name: windows_sql_availability_group

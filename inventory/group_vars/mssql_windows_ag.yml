@@ -29,8 +29,9 @@ windows_sql_server:
       description: SQL Server Agent service account
   sqlsysadminaccounts:
     - "{{ domain.netbios_name }}\\{{ domain.admin.username }}"
-  security_mode: Windows
-  sa_password: null
+    - BUILTIN\Administrators
+  security_mode: SQL
+  sa_password: "{{ mssql_sa_password | default(lab_password) }}"
   browser_startup_type: Disabled
   update_enabled: false
   update_source: null
@@ -44,6 +45,8 @@ windows_sql_server:
   sql_temp_db_dir: null
   sql_temp_db_log_dir: null
   reboot_if_required: true
+  manage_firewall: true
+  tcp_port: 1433
 
 mssql:
   cluster:

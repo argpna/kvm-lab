@@ -1,0 +1,54 @@
+---
+- name: allow inbound database mirroring endpoint connections
+  community.windows.win_firewall_rule:
+    name: "SQL Server availability group endpoint {{ windows_sql_availability_group.endpoint_port }}"
+    localport: "{{ windows_sql_availability_group.endpoint_port }}"
+    protocol: tcp
+    direction: in
+    action: allow
+    state: present
+    enabled: true
+    profiles: [domain, private, public]
+
+- name: give the SQL Server service account full access to the failover cluster
+  ansible.windows.win_powershell:
+    script: |
+      param($Account)
+      $Ansible.Changed = $false
+      $access = Get-ClusterAccess | Where-Object { $_.IdentityReference -eq $Account -and $_.ClusterRights -eq 'Full' }
+      if (-not $access) {
+        Grant-ClusterAccess -User $Account -Full | Out-Null
+        $Ansible.Changed = $true
+      }
+    parameters:
+      Account: "{{ windows_sql_availability_group.service_account }}"
+  run_once: true
+
+- name: enable Always On availability groups in the instance
+  ansible.windows.win_powershell:
+    script: |
+      $Ansible.Changed = $false
+      $key = 'HKLM:\SOFTWARE\Microsoft\Microsoft SQL Server\MSSQL*.MSSQLSERVER\MSSQLServer\HADR'
+      $enabled = (Get-ItemProperty $key -ErrorAction SilentlyContinue).HADR_Enabled
+      if ($enabled -ne 1) {
+        Import-Module SQLPS -DisableNameChecking
+        Enable-SqlAlwaysOn -ServerInstance $env:COMPUTERNAME -Force
+        $Ansible.Changed = $true
+      }
+
+- name: grant the cluster service the permissions that bring a group online
+  ansible.windows.win_powershell:
+    script: |
+      $Ansible.Changed = $false
+      $query = @"
+      IF SUSER_ID('NT SERVICE\ClusSvc') IS NULL CREATE LOGIN [NT SERVICE\ClusSvc] FROM WINDOWS;
+      GRANT ALTER ANY AVAILABILITY GROUP, CONNECT SQL, VIEW SERVER STATE TO [NT SERVICE\ClusSvc];
+      GRANT ALTER ANY AVAILABILITY GROUP, CONNECT SQL, VIEW SERVER STATE TO [NT AUTHORITY\SYSTEM];
+      "@
+      $conn = New-Object System.Data.SqlClient.SqlConnection 'Server=localhost;Integrated Security=SSPI;TrustServerCertificate=True'
+      $conn.Open()
+      $cmd = $conn.CreateCommand()
+      $cmd.CommandText = $query
+      $cmd.ExecuteNonQuery() | Out-Null
+      $conn.Close()
+      $Ansible.Changed = $true
