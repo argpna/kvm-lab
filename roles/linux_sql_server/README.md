@@ -49,6 +49,17 @@ define the dict replace it entirely, so declare every key.
 * `tcp_port` and `hadr_endpoint_port`: Ports opened in firewalld when
   `manage_firewall` is `true` and firewalld is active.
 
+## Pinned package versions
+
+`linux_sql_server_package_versions` in [`vars/main.yml`](vars/main.yml) sets the
+package version of `mssql-server` and `mssql-server-ha` for each major version.
+A major version without an entry installs the newest package. The role downgrades
+an installed package that is newer than the pinned version and restarts SQL Server.
+
+SQL Server 2022 is pinned to 16.0.4315.2 (CU27 + GDR). SQL Server 2022 CU28
+(16.0.4325.4) hangs when it accepts a database mirroring endpoint connection, so
+availability groups do not work with CU28.
+
 ## Example
 
 ```yml

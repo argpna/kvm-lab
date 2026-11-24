@@ -16,44 +16,67 @@
         if linux_sql_server.install_tools | default(true) else []
       }}
 
+# The "name=version" form is for apt and zypper, the "name-version" form is for dnf and rpm.
+- name: add the pinned version to the SQL Server package names
+  ansible.builtin.set_fact:
+    linux_sql_server_specs_equals: >-
+      {{
+        linux_sql_server_packages
+        | map('regex_replace', '$', ('=' ~ linux_sql_server_package_version) if linux_sql_server_package_version else '')
+        | list
+      }}
+    linux_sql_server_specs_rpm: >-
+      {{
+        linux_sql_server_packages
+        | map('regex_replace', '$', ('-' ~ linux_sql_server_package_version) if linux_sql_server_package_version else '')
+        | list
+      }}
+
 - name: install SQL Server packages on apt platforms
   ansible.builtin.apt:
-    name: "{{ linux_sql_server_packages + linux_sql_server_tools_packages }}"
+    name: "{{ linux_sql_server_specs_equals + linux_sql_server_tools_packages }}"
     state: present
+    allow_downgrade: true
     update_cache: true
   environment:
     ACCEPT_EULA: "Y"
+  notify: restart mssql-server
   when: ansible_pkg_mgr == 'apt'
 
 - name: install SQL Server packages on dnf platforms
   ansible.builtin.dnf:
-    name: "{{ linux_sql_server_packages + linux_sql_server_tools_packages }}"
+    name: "{{ linux_sql_server_specs_rpm + linux_sql_server_tools_packages }}"
     state: present
+    allow_downgrade: true
   environment:
     ACCEPT_EULA: "Y"
+  notify: restart mssql-server
   when:
     - ansible_pkg_mgr == 'dnf'
     - ansible_distribution_major_version | int != 8
 
+# dnf install with a full package version downgrades a newer installed package.
 - name: install SQL Server packages on RHEL 8 hosts
   ansible.builtin.raw: >-
-    rpm -q {{ (linux_sql_server_packages + linux_sql_server_tools_packages) | join(' ') }} >/dev/null 2>&1 &&
+    rpm -q {{ (linux_sql_server_specs_rpm + linux_sql_server_tools_packages) | join(' ') }} >/dev/null 2>&1 &&
     echo package-state-present ||
-    { ACCEPT_EULA=Y dnf install -y {{ (linux_sql_server_packages + linux_sql_server_tools_packages) | join(' ') }} &&
+    { ACCEPT_EULA=Y dnf install -y {{ (linux_sql_server_specs_rpm + linux_sql_server_tools_packages) | join(' ') }} &&
     echo package-state-installed; }
   register: linux_sql_server_redhat8_packages
   changed_when: "'package-state-installed' in linux_sql_server_redhat8_packages.stdout"
+  notify: restart mssql-server
   when:
     - ansible_pkg_mgr == 'dnf'
     - ansible_distribution_major_version | int == 8
 
 - name: install SQL Server packages on zypper platforms
   ansible.builtin.raw: >-
-    rpm -q {{ (linux_sql_server_packages + linux_sql_server_tools_packages) | join(' ') }} >/dev/null 2>&1 &&
+    rpm -q {{ (linux_sql_server_specs_rpm + linux_sql_server_tools_packages) | join(' ') }} >/dev/null 2>&1 &&
     echo package-state-present ||
-    { ACCEPT_EULA=Y zypper --non-interactive --gpg-auto-import-keys install -y
-    {{ (linux_sql_server_packages + linux_sql_server_tools_packages) | join(' ') }} &&
+    { ACCEPT_EULA=Y zypper --non-interactive --gpg-auto-import-keys install -y --oldpackage
+    {{ (linux_sql_server_specs_equals + linux_sql_server_tools_packages) | join(' ') }} &&
     echo package-state-installed; }
   register: linux_sql_server_zypper_packages
   changed_when: "'package-state-installed' in linux_sql_server_zypper_packages.stdout"
+  notify: restart mssql-server
   when: ansible_pkg_mgr == 'zypper'

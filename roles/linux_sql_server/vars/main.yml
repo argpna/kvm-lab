@@ -20,6 +20,14 @@ linux_sql_server_zypper_server_repo_url: >-
   https://packages.microsoft.com/config/sles/15/mssql-server-{{ linux_sql_server.version }}.repo
 linux_sql_server_zypper_prod_repo_url: https://packages.microsoft.com/config/sles/15/prod.repo
 
+# Package version of mssql-server and mssql-server-ha for each major version. A major
+# version without an entry installs the newest package. CU28 (16.0.4325.4) hangs when
+# it accepts a database mirroring endpoint connection, so the role pins CU27 + GDR.
+linux_sql_server_package_versions:
+  "2022": 16.0.4315.2-1
+linux_sql_server_package_version: >-
+  {{ linux_sql_server_package_versions[linux_sql_server.version | string] | default('') }}
+
 linux_sql_server_tools_packages_apt:
   - mssql-tools18
   - unixodbc-dev
