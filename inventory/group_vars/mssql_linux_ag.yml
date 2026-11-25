@@ -24,6 +24,14 @@ mssql:
     hacluster_password: "{{ lab_password }}"
     # openssl passwd -6 -salt mssqllabhacluster 'Kvmpass@2099'
     hacluster_password_hash: "$6$mssqllabhacluste$hot/jRoibqOc24idJu5Go0BFYWvVJD5k40w0zUrEdSUsK2LdUN.YbU1fh9imGBNs7MsyB/HEFZUQkMER7e2cs."  # noqa yaml[line-length]
+    listener:
+      name: aglnx01
+      dns_name: aglnx01.lab.local
+      ips:
+        - address: 192.168.131.51
+          subnet: 192.168.131.0/24
+        - address: 192.168.132.51
+          subnet: 192.168.132.0/24
     sql_login:
       manage: true
       name: pacemaker
