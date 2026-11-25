@@ -3,7 +3,7 @@ linux_sql_server:
   version: "{{ sql_version | default(2022) }}"
   accept_eula: true
   edition: Developer
-  sa_password: "{{ lab_password }}"
+  sa_password: "{{ mssql_sa_password | default(lab_password) }}"
   enable_agent: true
   hadr_enabled: true
   install_tools: true
