@@ -28,6 +28,9 @@ locals {
 
   pubkey    = trimspace(file(var.ssh_pubkey_file))
   bootstrap = try(local.h.bootstrap_python, null)
+  # The default template maps the host name to 127.0.1.1, which availability group nodes must not have.
+  hadr_node  = try(local.h.linux_sql_server.hadr_enabled, false)
+  hosts_addr = local.h.ansible_host
   install_cmd = {
     apt    = "apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y"
     dnf    = "dnf install -y"
@@ -38,6 +41,19 @@ locals {
     #cloud-config
     hostname: ${local.name}
     manage_etc_hosts: true
+    %{~if local.hadr_node}
+    write_files:
+      - path: /etc/cloud/templates/hosts.debian.tmpl
+        content: |
+          ## template:jinja
+          # cloud-init renders this file on every boot (manage_etc_hosts).
+          ${local.hosts_addr} {{fqdn}} {{hostname}}
+          127.0.0.1 localhost
+
+          ::1 localhost ip6-localhost ip6-loopback
+          ff02::1 ip6-allnodes
+          ff02::2 ip6-allrouters
+    %{~endif}
     package_update: false
     users:
       - name: ${var.lab_user}
