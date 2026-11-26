@@ -1,0 +1,13 @@
+---
+# Usage examples:
+#   ansible-playbook playbooks/windows-sql-availability-group.yml
+#   ansible-playbook playbooks/windows-sql-availability-group.yml --limit mssql_windows_ag
+#
+- name: enable Always On availability groups on MSSQL Windows cluster hosts
+  hosts: mssql_windows_ag
+  gather_facts: false
+
+  tasks:
+    - name: prepare the instance and the failover cluster for availability groups
+      ansible.builtin.include_role:
+        name: windows_sql_availability_group

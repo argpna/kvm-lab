@@ -61,6 +61,12 @@
     - never
     - windows_sql_server
 
+- name: import windows sql server availability group playbook
+  ansible.builtin.import_playbook: windows-sql-availability-group.yml
+  tags:
+    - never
+    - windows_sql_availability_group
+
 - name: import linux domain members playbook
   ansible.builtin.import_playbook: linux-domain-members.yml
   tags:
